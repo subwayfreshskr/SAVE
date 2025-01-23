@@ -1,4 +1,4 @@
-import React from 'react';
+import {React,useState,useRef} from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -6,28 +6,28 @@ const PasswordInput = ({
   placeholder,
   value,
   onChangeText,
-  secureTextEntry,
-  setSecureTextEntry,
-  isFocused,
-  setIsFocused
 }) => {
-  console.log('PasswordInput Props:', {
+
+   const [isFocused, setIsFocused] = useState(false);
+   const [secureTextEntry, setSecureTextEntry] = useState(true);
+
+   const inputRef = useRef(null);
+
+  /*console.log('PasswordInput Props:', {
     placeholder,
     value,
     secureTextEntry,
     isFocused
   });
-
+*/
   const handleEyePress = () => {
-    console.log('Eye button pressed');
-    console.log('Before toggle:', secureTextEntry);
     setSecureTextEntry(!secureTextEntry);
-    console.log('After toggle:', !secureTextEntry);
   };
 
   return (
     <View style={[styles.inputContainer, isFocused && styles.inputContainerFocused]}>
       <TextInput
+      ref={inputRef}
         style={styles.input}
         placeholder={placeholder}
         placeholderTextColor="#ccc"
@@ -45,8 +45,7 @@ const PasswordInput = ({
         autoComplete="off"
         textContentType="oneTimeCode"
         autoCorrect={false}
-        spellCheck={false}
-        keyboardType="visible-password"
+        spellCheck={false} 
       />
       {/* 根據 isFocused 顯示或隱藏 eye 按鈕 */}
       {isFocused && (

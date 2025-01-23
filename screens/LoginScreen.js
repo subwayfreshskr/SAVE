@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,10 +17,7 @@ import AccountInput from './Components/AccountInput';
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [isUsernameFocused, setIsUsernameFocused] = useState(false);
-
+  
   const handleLogin = () => {
     if (!username.trim()) {
       Alert.alert('錯誤', '請輸入帳號');
@@ -71,9 +68,6 @@ export default function LoginScreen({ navigation }) {
           placeholder="帳號"
           value={username}
           onChangeText={setUsername}
-          /*isFocused={isUsernameFocused}
-          setIsFocused={setIsUsernameFocused}
-          setSecureTextEntry={setUsername}*/
         />
 
          {/* 密碼輸入框 */}
@@ -81,11 +75,6 @@ export default function LoginScreen({ navigation }) {
           placeholder="密碼"
           value={password}
           onChangeText={setPassword}
-          isFocused={isPasswordFocused}
-          setIsFocused={setIsPasswordFocused}
-          secureTextEntry={!passwordVisible}
-          setSecureTextEntry={() => setPasswordVisible(!passwordVisible)}
-          
         />
 
         {/* 忘記密碼 */}
