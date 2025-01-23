@@ -40,12 +40,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   inputContainerFocused: {
-    borderColor: '#000',
+    borderColor: '#606060',
   },
   input: {
     flex: 1,
     fontSize: 14,
-    color: '#000',
+    color: '#606060',
   },
 });
 

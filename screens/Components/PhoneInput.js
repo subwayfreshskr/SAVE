@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   containerFocused: {
-    borderColor: '#101010',
+    borderColor: '#606060',
     borderWidth: 1,
   },
   input: {
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingHorizontal: 16,
     fontSize: 14,
-    color: '#101010',
+    color: '#606060',
   },
   verificationContainer: {
     width: '100%',
@@ -209,10 +209,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: 14,
-    color: '#101010',
+    color: '#606060',
   },
   wrapperFocused: {
-    borderColor: '#101010',
+    borderColor: '#606060',
     borderWidth: 1,
   },
   sendCodeButton: {

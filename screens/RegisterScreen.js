@@ -34,9 +34,28 @@ export default function ForgetScreen({ navigation }) {
         codeError: null,
         isCodeSent: false
       });
+      const [agreeToTerms, setAgreeToTerms] = useState(false);
+      const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
       
-      const handleConfirm= () => {
-        // 先檢查手機和驗證碼的驗證狀態
+      const handleLoginPress = () => {
+        navigation.navigate('Login');
+      };
+
+      const handleRegister= () => {
+        if (!password.trim()) {
+          Alert.alert('錯誤', '請輸入密碼');
+          return;
+        }
+      
+        if (!confirmPassword.trim()) {
+          Alert.alert('錯誤', '請輸入確認密碼');
+          return;
+        }
+      
+        if (password !== confirmPassword) {
+          Alert.alert('錯誤', '兩次輸入的密碼不相同');
+          return;
+        }
         if (!phoneValidation.isValid) {
           if (phoneValidation.phoneError) {
             Alert.alert('錯誤', phoneValidation.phoneError);
@@ -52,44 +71,19 @@ export default function ForgetScreen({ navigation }) {
           }
         }
       
-        // 檢查密碼是否為空
-        if (!password.trim()) {
-          Alert.alert('錯誤', '請輸入新密碼');
-          return;
-        }
-      
-        // 檢查確認密碼是否為空
-        if (!confirmPassword.trim()) {
-          Alert.alert('錯誤', '請輸入確認密碼');
-          return;
-        }
-      
-        // 檢查兩次密碼是否相同
-        if (password !== confirmPassword) {
-          Alert.alert('錯誤', '兩次輸入的密碼不相同');
-          return;
-        }
-      
         navigation.navigate('Login');
       };
 
     const handleSendCode = () => {
         console.log('發送驗證碼到：', phone);
       };
-      const handleBack = () => {
-        navigation.navigate('Login');
+      const handleGoogleLogin = () => {
+        Alert.alert('提示', 'Google 快速登入尚未實現');
       };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* 返回按鈕 */}
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.backText}>回上一頁</Text>
-        </TouchableOpacity>
         {/* Logo 區塊 */}
         <View style={styles.logoContainer}>
           <Image
@@ -109,7 +103,7 @@ export default function ForgetScreen({ navigation }) {
           setIsFocused={setIsUsernameFocused}
           setSecureTextEntry={setUsername}
         />
-               {/* 新密碼輸入框 */}
+        {/* 新密碼輸入框 */}
        <PasswordInput
           placeholder="密碼"
           value={password}
@@ -143,15 +137,59 @@ export default function ForgetScreen({ navigation }) {
       onSendCode={handleSendCode}
       onValidationChange={setPhoneValidation} 
       />
+      {/* 條款同意勾選框 */}
+      <View style={styles.checkboxContainer}>
+            <TouchableOpacity
+              style={[
+                styles.checkbox,
+                { backgroundColor: agreeToTerms ? '#FFBF69' : '#fff' }
+              ]}
+              onPress={() => setAgreeToTerms(!agreeToTerms)}
+            >
+              {agreeToTerms && <Icon name="check" size={12} color="#fff"/>}
+            </TouchableOpacity>
+            <Text style={styles.checkboxLabel}>我已閱讀並同意【隱私權保護政策】</Text>
+          </View>
 
+          {/* 會員同意 */}
+          <View style={styles.checkboxContainer}>
+            <TouchableOpacity
+              style={[
+                styles.checkbox,
+                { backgroundColor: subscribeNewsletter ? '#FFBF69' : '#fff' }
+              ]}
+              onPress={() => setSubscribeNewsletter(!subscribeNewsletter)}
+            >
+              {subscribeNewsletter && <Icon name="check" size={12} color="#fff" />}
+            </TouchableOpacity>
+            <Text style={styles.checkboxLabel}>本人同意會員資料登入於 APP</Text>
+          </View>
 
         {/* 分隔線 */}
         <View style={styles.line}></View>
 
-        {/* 確認 */}
-        <TouchableOpacity style={styles.ConfirmButton} onPress={handleConfirm}>
-          <Text style={styles.ConfirmButtonText}>確認</Text>
+        {/* 註冊 */}
+        <TouchableOpacity style={styles.RegisterButton} onPress={handleRegister}>
+          <Text style={styles.RegisterButtonText}>註冊</Text>
         </TouchableOpacity>
+
+        {/* Google 快速登入 */}
+                <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+                  <View style={styles.googleContent}>
+                    <Image
+                      source={require('../assets/google.png')}
+                      style={styles.googleLogo}
+                    />
+                    <Text style={styles.googleButtonText}>Google 快速登入</Text>
+                  </View>
+                </TouchableOpacity>
+
+        {/* 登入區域 */}
+        <View style={styles.loginContainer}>
+            <TouchableOpacity onPress={handleLoginPress}>
+              <Text style={styles.loginText}>已經是會員了? 登入</Text>
+            </TouchableOpacity>
+          </View>
 
         {/* 版權文字 */}
         <Text style={styles.copyright}>Copyright@byGeorgeXIE</Text>
@@ -167,22 +205,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  backButton: {
-    position: 'absolute',
-    top: 60,
-    left: 24,
-    zIndex: 1,
-    paddingVertical: 8,
-  },
-  backText: {
-    fontSize: 12,
-    color: '#FFF',
-    fontWeight: '500',
-  },
   logoContainer: {
     width: 402,
     height: 100,
-    backgroundColor: '#F08080',
+    backgroundColor: '#FFBF69',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -195,7 +221,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF6B6B',
+    color: '#FFBF69',
     marginBottom: 24,
   },
   passwordContainer: {
@@ -221,23 +247,45 @@ const styles = StyleSheet.create({
   eyeButton: {
     marginLeft: 8,
   },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: 24,
+  },
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderWidth: 1,
+    borderColor: '#606060',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginRight: 8,
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#606060',
+  },
   line: {
     width: '100%',
     height: 1,
     backgroundColor: '#606060',
     marginBottom: 24,
   },
-  ConfirmContainer: {
+  RegisterContainer: {
     marginBottom: 24,
   },
-  ConfirmText: {
+  RegisterText: {
     fontSize: 14,
     color: '#606060',
   },
-  ConfirmButton: {
+  RegisterButton: {
     width: '100%',
     height: 50,
-    padding: 16,
+    alignItems:'center',
+    justifyContent:'center',
     backgroundColor: '#F08080',
     borderRadius: 4,
     alignItems: 'center',
@@ -247,10 +295,44 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 4,
   },
-  ConfirmButtonText: {
+  RegisterButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  googleButton: {
+    width: '100%',
+    height: 50,
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius: 4,
+    alignItems: 'center',
+    marginBottom: 24,
+    backgroundColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 4,
+  },
+  googleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  googleLogo: {
+    width: 16,
+    height: 16,
+    marginRight: 8,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    color: '#606060',
+  },
+  loginContainer: {
+    marginBottom: 24,
+  },
+  loginText: {
+    fontSize: 14,
+    color: '#FFBF69',
   },
   copyright: {
     position: 'absolute',

@@ -147,29 +147,6 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     marginBottom: 24,
   },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    height: 50,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#aaa',
-    borderRadius: 4,
-    backgroundColor: '#fff',
-    marginBottom: 24,
-  },
-  passwordContainerFocused: {
-    borderColor: '#000',
-  },
-  passwordInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#000',
-  },
-  eyeButton: {
-    marginLeft: 8,
-  },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: 24,
@@ -227,7 +204,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     fontSize: 16,
-    color: '#101010',
+    color: '#606060',
   },
   registerContainer: {
     marginBottom: 24,

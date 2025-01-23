@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   inputContainerFocused: {
-    borderColor: '#000',
+    borderColor: '#606060',
   },
   input: {
     flex: 1,
