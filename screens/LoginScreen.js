@@ -105,9 +105,11 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
 
         {/* 註冊區域 */}
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>尚未成為會員?</Text>
-        </View>
+        <TouchableOpacity style={styles.registerContainer}>
+          <View style={styles.googleContent}>
+            <Text style={styles.registerText}>尚未成為會員?</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* 註冊按鈕 */}
         <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
@@ -187,7 +189,6 @@ const styles = StyleSheet.create({
   loginButton: {
     width: '100%',
     height: 50,
-    padding: 16,
     backgroundColor: '#F08080',
     borderRadius: 4,
     alignItems: 'center',
@@ -197,6 +198,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loginButtonText: {
     color: '#fff',
@@ -206,7 +209,6 @@ const styles = StyleSheet.create({
   googleButton: {
     width: '100%',
     height: 50,
-    padding: 16,
     borderRadius: 4,
     alignItems: 'center',
     marginBottom: 24,
@@ -215,6 +217,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   googleContent: {
     flexDirection: 'row',
@@ -239,7 +243,6 @@ const styles = StyleSheet.create({
   registerButton: {
     width: '100%',
     height: 50,
-    padding: 16,
     backgroundColor: '#FFBF69',
     borderRadius: 4,
     alignItems: 'center',
@@ -248,6 +251,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   registerButtonText: {
     color: '#fff',
