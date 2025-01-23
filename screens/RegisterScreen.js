@@ -9,6 +9,7 @@ import {
   Image,
   Keyboard,
   TouchableWithoutFeedback,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import PasswordInput from './Components/PasswordInput';
@@ -83,15 +84,19 @@ export default function ForgetScreen({ navigation }) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        {/* Logo 區塊 */}
-        <View style={styles.logoContainer}>
+    <View style={styles.container}>
+      {/* Logo 區塊 */}
+      <View style={styles.logoContainer}>
           <Image
             source={require('../assets/LOGO.png')}
             style={styles.logo}
           />
         </View>
-
+        <View style={styles.scrollContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 登入標題 */}
         <Text style={styles.title}>註冊</Text>
          {/* 帳號輸入框 */}
@@ -190,6 +195,8 @@ export default function ForgetScreen({ navigation }) {
               <Text style={styles.loginText}>已經是會員了? 登入</Text>
             </TouchableOpacity>
           </View>
+          </ScrollView>
+          </View>
 
         {/* 版權文字 */}
         <Text style={styles.copyright}>Copyright@byGeorgeXIE</Text>
@@ -202,6 +209,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    flex: 1,
+    maxHeight: '80%',
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     paddingHorizontal: 24,
   },
@@ -223,29 +237,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFBF69',
     marginBottom: 24,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    height: 50,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#aaa',
-    borderRadius: 4,
-    backgroundColor: '#fff',
-    marginBottom: 24,
-  },
-  passwordContainerFocused: {
-    borderColor: '#000',
-  },
-  passwordInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#000',
-  },
-  eyeButton: {
-    marginLeft: 8,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -337,6 +328,7 @@ const styles = StyleSheet.create({
   copyright: {
     position: 'absolute',
     bottom: 24,
+    alignSelf: 'center',
     fontSize: 12,
     color: '#aaa',
   },
