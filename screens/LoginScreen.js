@@ -71,9 +71,9 @@ export default function LoginScreen({ navigation }) {
           placeholder="帳號"
           value={username}
           onChangeText={setUsername}
-          isFocused={isUsernameFocused}
+          /*isFocused={isUsernameFocused}
           setIsFocused={setIsUsernameFocused}
-          setSecureTextEntry={setUsername}
+          setSecureTextEntry={setUsername}*/
         />
 
          {/* 密碼輸入框 */}

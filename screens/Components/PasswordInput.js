@@ -46,6 +46,7 @@ const PasswordInput = ({
         textContentType="oneTimeCode"
         autoCorrect={false}
         spellCheck={false}
+        keyboardType="visible-password"
       />
       {/* 根據 isFocused 顯示或隱藏 eye 按鈕 */}
       {isFocused && (
