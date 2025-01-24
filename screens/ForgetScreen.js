@@ -227,7 +227,8 @@ const styles = StyleSheet.create({
   ConfirmButton: {
     width: '100%',
     height: 50,
-    padding: 16,
+    alignItems:'center',
+    justifyContent:'center',
     backgroundColor: '#F08080',
     borderRadius: 4,
     alignItems: 'center',

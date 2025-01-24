@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingHorizontal: 16,
     fontSize: 14,
-    color: '#606060',
+    color: '#101010',
   },
   verificationContainer: {
     width: '100%',
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: 14,
-    color: '#606060',
+    color: '#101010',
   },
   wrapperFocused: {
     borderColor: '#606060',

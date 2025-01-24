@@ -84,10 +84,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: '#000',
+    color: '#101010',
   },
   eyeButton: {
-    padding: 8, // 增加點擊區域
+    padding: 8,
     marginLeft: 8,
   },
 });

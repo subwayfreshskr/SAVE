@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Alert } from 'react-native';
 
 export default function MainScreen() {
   const navigation = useNavigation();
@@ -21,8 +22,34 @@ export default function MainScreen() {
     navigation.navigate('Main1Screen');
   };
 
+ const handleBack = () => {
+     Alert.alert(
+       '登出確認',
+       '您確定要登出嗎？',
+       [
+         {
+           text: '取消',
+           style: 'cancel',
+         },
+         {
+           text: '確認',
+           onPress: () => navigation.navigate('Login'),
+         },
+       ],
+       { cancelable: false }
+     );
+   };
+ 
+
   return (
     <View style={styles.container}>
+      {/* 返回按鈕 */}
+            <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleBack}
+      >
+        <Text style={styles.backText}>登出</Text>
+      </TouchableOpacity>
       {/* 左右箭頭 */}
       <TouchableOpacity 
         style={styles.arrowLeft}
@@ -73,6 +100,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 24,
+    zIndex: 1,
+    paddingVertical: 8,
+  },
+  backText: {
+    fontSize: 12,
+    color: '#FFF',
+    fontWeight: '500',
   },
   arrowLeft: {
     position: 'absolute',
