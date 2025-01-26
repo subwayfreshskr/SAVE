@@ -1,25 +1,12 @@
-import {React,useState,useRef} from 'react';
+import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const PasswordInput = ({
-  placeholder,
-  value,
-  onChangeText,
-}) => {
+const PasswordInput = ({ placeholder, value, onChangeText }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const inputRef = useRef(null);
 
-   const [isFocused, setIsFocused] = useState(false);
-   const [secureTextEntry, setSecureTextEntry] = useState(true);
-
-   const inputRef = useRef(null);
-
-  /*console.log('PasswordInput Props:', {
-    placeholder,
-    value,
-    secureTextEntry,
-    isFocused
-  });
-*/
   const handleEyePress = () => {
     setSecureTextEntry(!secureTextEntry);
   };
@@ -27,27 +14,16 @@ const PasswordInput = ({
   return (
     <View style={[styles.inputContainer, isFocused && styles.inputContainerFocused]}>
       <TextInput
-      ref={inputRef}
+        ref={inputRef}
         style={styles.input}
         placeholder={placeholder}
         placeholderTextColor="#ccc"
         secureTextEntry={secureTextEntry}
         value={value}
         onChangeText={onChangeText}
-        onFocus={() => {
-          console.log('Input focused');
-          setIsFocused(true);
-        }}
-        onBlur={() => {
-          console.log('Input blurred');
-          setIsFocused(false);
-        }}
-        autoComplete="off"
-        textContentType="oneTimeCode"
-        autoCorrect={false}
-        spellCheck={false} 
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       />
-      {/* 根據 isFocused 顯示或隱藏 eye 按鈕 */}
       {isFocused && (
         <TouchableOpacity
           onPress={handleEyePress}

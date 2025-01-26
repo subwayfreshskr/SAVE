@@ -66,7 +66,7 @@ const handleBack = () => {
       {/* Rest of your existing components */}
       <View style={styles.iconContainer}>
         <Image
-          source={require('../assets/365.png')}
+          source={require('../assets/自訂比例.png')}
           style={styles.icon}
         />
       </View>
