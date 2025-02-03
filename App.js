@@ -7,7 +7,9 @@ import ForgetScreen from './screens/ForgetScreen';
 import MainScreen from './screens/MainScreen';
 import Main1Screen from './screens/Main1Screen';
 import Main2Screen from './screens/Main2Screen';
-
+import save365 from './screens/save365';
+import save52 from './screens/save52';
+import savecos from './screens/savecos';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -25,6 +27,9 @@ export default function App() {
         <Stack.Screen name="MainScreen" component={MainScreen} />
         <Stack.Screen name="Main1Screen" component={Main1Screen} />
         <Stack.Screen name="Main2Screen" component={Main2Screen} />
+        <Stack.Screen name="save365" component={save365} />
+        <Stack.Screen name="save52" component={save52} />
+        <Stack.Screen name="savecos" component={savecos} />
       </Stack.Navigator>
     </NavigationContainer>
   );

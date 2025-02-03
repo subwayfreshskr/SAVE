@@ -21,7 +21,9 @@ export default function Main2Screen() {
   const handleRightArrow = () => {
     navigation.navigate('MainScreen');
   };
-
+  const handleConfirm = () => {
+    navigation.navigate('savecos');
+  };
 const handleBack = () => {
     Alert.alert(
       '登出確認',
@@ -79,7 +81,7 @@ const handleBack = () => {
         簡介簡介簡介簡介簡介簡介簡介簡介簡介簡介
       </Text>
 
-      <TouchableOpacity style={styles.confirmButton}>
+      <TouchableOpacity style={styles.confirmButton}onPress={handleConfirm}>
         <Text style={styles.confirmButtonText}>確認選擇</Text>
       </TouchableOpacity>
 
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     top: 60,
-    left: 24,
+    right: 24,
     zIndex: 1,
     paddingVertical: 8,
   },
