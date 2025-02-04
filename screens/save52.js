@@ -3,9 +3,12 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   Image,
   Animated,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -77,6 +80,7 @@ export default function Save365({ navigation }) {
   };
   
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View style={styles.container}>
       {/* Logo 區塊 */}
       <View style={styles.logoContainer}>
@@ -106,6 +110,18 @@ export default function Save365({ navigation }) {
   </TouchableOpacity>
 )}
 
+{/* 只有在第一頁才顯示標題和輸入框 */}
+{currentPage === 0 && (
+  <>
+    <Text style={styles.title}>請輸入每周欲存錢金額</Text>
+    <TextInput
+      style={styles.input}
+      placeholder="輸入金額"
+      placeholderTextColor="#ccc"
+      keyboardType="numeric"
+    />
+  </>
+)}
 
       {/* 數字網格區域 */}
       <View style={styles.calendarContainer}>
@@ -188,6 +204,7 @@ export default function Save365({ navigation }) {
         </View>
       </View>
     </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -223,10 +240,25 @@ const styles = StyleSheet.create({
     top: '50%',
     zIndex: 1,
   },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FBBE0D',
+    marginBottom: 16,
+  },
+  input: {
+    width: '85%', 
+    height: 50,
+    borderWidth: 2,
+    borderColor: '#FBBE0D',
+    borderRadius: 4,
+    textAlign: 'center',
+    fontSize: 18,
+    paddingHorizontal: 10,
+  },
   calendarContainer: {
-    flex: 1,
     flexDirection: 'row',
-    paddingHorizontal: 24,
+    margin:24,
   },
   numbersContainer: {
     flex: 1,
@@ -234,7 +266,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 20,
   },
   circle: {
     width: 56,
