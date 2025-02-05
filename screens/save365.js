@@ -61,8 +61,10 @@ export default function Save365({ navigation }) {
   const handlePageChange = (direction) => {
     if ((direction === 'next' && currentPage >= pages.length - 1) || 
         (direction === 'prev' && currentPage <= 0)) {
+          console.log('!!!',currentPage)
       return; // 避免超出範圍
     }
+    console.log(currentPage)
   
     Animated.timing(fadeAnim, {
       toValue: 0.3, // 先淡出

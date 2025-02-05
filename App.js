@@ -21,15 +21,15 @@ export default function App() {
           headerShown: false
         }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Forget" component={ForgetScreen} />
-        <Stack.Screen name="MainScreen" component={MainScreen} />
-        <Stack.Screen name="Main1Screen" component={Main1Screen} />
-        <Stack.Screen name="Main2Screen" component={Main2Screen} />
-        <Stack.Screen name="save365" component={save365} />
-        <Stack.Screen name="save52" component={save52} />
-        <Stack.Screen name="savecos" component={savecos} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="Register" component={RegisterScreen}  options={{gestureEnabled:false}}/>
+        <Stack.Screen name="Forget" component={ForgetScreen} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="MainScreen" component={MainScreen} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="Main1Screen" component={Main1Screen} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="Main2Screen" component={Main2Screen} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="save365" component={save365} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="save52" component={save52} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="savecos" component={savecos} options={{gestureEnabled:false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );

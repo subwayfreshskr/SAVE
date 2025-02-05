@@ -1,120 +1,222 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
+  View,
   Text,
   TextInput,
-  View,
   TouchableOpacity,
-  Alert,
   Image,
-  Keyboard,
   TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
+  Animated,
+  Alert,
+  Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import PasswordInput from './Components/PasswordInput';
-import AccountInput from './Components/AccountInput';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { PieChart } from 'react-native-chart-kit';
 
-export default function savecos({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  
-  const handleLogin = () => {
-    if (!username.trim()) {
-      Alert.alert('錯誤', '請輸入帳號');
-      return;
-    }
-    if (!password.trim()) {
-      Alert.alert('錯誤', '請輸入密碼');
-      return;
-    }
-  
-    // 假設驗證成功後跳轉到主畫面
-    if (username === 'test' && password === '123456') {
-      Alert.alert('登入成功', `歡迎, ${username}!`);
-      navigation.navigate('MainScreen'); 
-    } else {
-      Alert.alert('錯誤', '帳號或密碼不正確，請重新輸入');
-    }
+const screenWidth = Dimensions.get('window').width;
+const pieChartWidth = screenWidth * 0.85;
+// 左右欄位組件
+const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
+  const [isEditingLeft, setIsEditingLeft] = useState(false);
+  const [isEditingRight, setIsEditingRight] = useState(false);
+  const slideAnim = useState(new Animated.Value(0))[0];
+
+  React.useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: isDeleteMode ? 40 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [isDeleteMode]);
+
+  return (
+    <View style={styles.rowContainer}>
+      {/* 左側欄位 */}
+      <View style={styles.leftBox}>
+  {isDeleteMode && (
+    <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+      <Icon name="delete" size={20} color="#606060" />
+    </TouchableOpacity>
+  )}
+  {isEditingLeft ? (
+    <TextInput
+      style={styles.textInput}
+      value={leftText}
+      onChangeText={setLeftText}
+      autoFocus
+      onBlur={() => setIsEditingLeft(false)}
+    />
+  ) : (
+    <TouchableOpacity onPress={() => setIsEditingLeft(true)} style={styles.editableText}>
+      <Text style={styles.text}>{leftText}</Text>
+      <Icon name="edit" size={20} color="#2A6F97" style={styles.editIcon} />
+    </TouchableOpacity>
+  )}
+</View>
+
+
+      {/* 右側欄位 */}
+      <View style={styles.rightBox}>
+        {isEditingRight ? (
+          <TextInput
+            style={styles.textInput}
+            value={rightNumber === "0" ? "" : rightNumber}  
+            onChangeText={(num) => {
+              let sanitizedNumber = num.replace(/^0+/, ""); // 移除前導 0
+              if (sanitizedNumber === "") sanitizedNumber = "0";
+
+              // 檢查是否超過 10
+              if (parseInt(sanitizedNumber, 10) > 10) {
+                Alert.alert("數值不能超過 10，請重新輸入！");
+                return;
+              }
+
+              // 計算新數值總和
+              const newTotal = rowData.reduce((sum, row) => sum + (row.rightNumber === rightNumber ? parseInt(sanitizedNumber, 10) : parseInt(row.rightNumber, 10)), 0);
+
+              if (newTotal > 10) {
+                Alert.alert("所有數值總和不能超過 10，請重新輸入！");
+                return;
+              }
+
+              setRightNumber(sanitizedNumber);
+            }}
+            keyboardType="numeric"
+            autoFocus
+            onBlur={() => setIsEditingRight(false)}
+          />
+        ) : (
+          <TouchableOpacity onPress={() => setIsEditingRight(true)}>
+            <Text style={styles.number}>{rightNumber}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+export default function Savecos({ navigation }) {
+  // 初始化多組數據
+  const [rowData, setRowData] = useState([
+    { id: 1, leftText: '生活開銷', rightNumber: '6' },
+    { id: 2, leftText: '存錢', rightNumber: '3' },
+    { id: 3, leftText: '風險管理', rightNumber: '1' },
+  ]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+   // 新增項目
+   const addNewRow = () => {
+    const newId = rowData.length + 1;
+    setRowData([...rowData, { id: newId, leftText: '新項目', rightNumber: '0' }]);
+  };
+  const deleteRow = (id) => {
+    setRowData(rowData.filter((item) => item.id !== id));
   };
 
-  const handleGoogleLogin = () => {
-    Alert.alert('提示', 'Google 快速登入尚未實現');
-  };
-
-  const handleRegister = () => {
-    navigation.navigate('Register');
-  };
-
-  const handleForgetPassword = () => {
-    navigation.navigate('Forget');
-  };
-
+  const chartData = rowData.map((item, index) => ({
+    name: item.leftText,
+    population: isNaN(parseInt(item.rightNumber, 10)) ? 0 : parseInt(item.rightNumber, 10),
+    color: ['#a9d6e5', '#89c2d9', '#61a5c2', '#468faf', '#2c7da0', '#2a6f97', '#014f86', '#01497c', '#013a63', '#012a4a'][index % 10],
+    legendFontColor: '#333',
+    legendFontSize: 14,
+  }));
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         {/* Logo 區塊 */}
         <View style={styles.logoContainer}>
-          <Image
-            source={require('../assets/LOGO.png')}
-            style={styles.logo}
-          />
+          <Image source={require('../assets/LOGO.png')} style={styles.logo} />
         </View>
 
-        {/* 登入標題 */}
-        <Text style={styles.title}>登入</Text>
-
-       {/* 帳號輸入框 */}
-       <AccountInput
-          placeholder="帳號"
-          value={username}
-          onChangeText={setUsername}
+        <Text style={styles.title}>請輸入本月薪水金額</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="輸入金額"
+          placeholderTextColor="#ccc"
+          keyboardType="numeric"
         />
-        {/* 忘記密碼 */}
-        <TouchableOpacity 
-          style={styles.forgotPassword}
-          onPress={handleForgetPassword}
-        >
-          <Text style={styles.forgotPasswordText}>忘記密碼?</Text>
-        </TouchableOpacity>
-
-        {/* 分隔線 */}
-        <View style={styles.line}></View>
-
-        {/* 登入按鈕 */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>登入</Text>
-        </TouchableOpacity>
-
-        {/* Google 快速登入 */}
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-          <View style={styles.googleContent}>
-            <Image
-              source={require('../assets/google.png')}
-              style={styles.googleLogo}
+         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
+          {rowData.map((item) => (
+            <RowItem
+              key={item.id}
+              leftText={item.leftText}
+              setLeftText={(text) => {
+                const updatedData = rowData.map((row) =>
+                  row.id === item.id ? { ...row, leftText: text } : row
+                );
+                setRowData(updatedData);
+              }}
+              rightNumber={item.rightNumber}
+              setRightNumber={(num) => {
+                const updatedData = rowData.map((row) =>
+                  row.id === item.id ? { ...row, rightNumber: num === "" ? "0" : num } : row
+                );
+                setRowData(updatedData);
+              }}
+              rowData={rowData}
+              setRowData={setRowData}            
+              onDelete={() => deleteRow(item.id)}
+              isDeleteMode={isDeleteMode}
             />
-            <Text style={styles.googleButtonText}>Google 快速登入</Text>
+          ))}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.addButton} onPress={addNewRow}>
+            <Icon name="add-circle" size={24} color="#fff" />
+            <Text style={styles.addButtonText}>新增</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.deleteModeButton, isDeleteMode && styles.deleteModeActive]}
+            onPress={() => setIsDeleteMode(!isDeleteMode)}
+          >
+            <Icon name="delete" size={24} color="#fff" />
+            <Text style={styles.addButtonText}>{isDeleteMode ? '完成' : '刪除'}</Text>
+          </TouchableOpacity>
+        </View>
+        <PieChart
+    data={chartData}
+    width={pieChartWidth} // 設定寬度為 85% 的螢幕寬度
+    height={220}
+    chartConfig={{
+      backgroundGradientFrom: '#fff',
+      backgroundGradientTo: '#fff',
+      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    }}
+    accessor="population"
+    backgroundColor="transparent"
+    paddingLeft="15"
+    absolute
+  />
+        </ScrollView>
+        {/* 查看按鈕 */}
+        <TouchableOpacity style={styles.checkButton}>
+          <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+        </TouchableOpacity>
+
+        {/* 底部導航欄 */}
+        <View style={styles.menuContainer}>
+          <View style={styles.iconContainer}>
+            <TouchableOpacity style={styles.iconWrapper}>
+              <Image source={require('../assets/account.png')} style={styles.menuIcon} />
+              <Text style={styles.iconText}>記帳</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconWrapper}>
+              <Image source={require('../assets/home.png')} style={styles.menuIcon} />
+              <Text style={styles.iconText}>主頁</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconWrapper}>
+              <Image source={require('../assets/setting.png')} style={styles.menuIcon} />
+              <Text style={styles.iconText}>設定</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-
-        {/* 註冊區域 */}
-        <TouchableOpacity style={styles.registerContainer}>
-          <View style={styles.googleContent}>
-            <Text style={styles.registerText}>尚未成為會員?</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* 註冊按鈕 */}
-        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-          <Text style={styles.registerButtonText}>註冊</Text>
-        </TouchableOpacity>
-
-        {/* 版權文字 */}
-        <Text style={styles.copyright}>Copyright@byGeorgeXIE</Text>
+        </View>
       </View>
     </TouchableWithoutFeedback>
   );
 }
 
+// 樣式設定
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -125,7 +227,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 402,
     height: 100,
-    backgroundColor: '#F08080',
+    backgroundColor: '#89C2D9',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -136,100 +238,179 @@ const styles = StyleSheet.create({
     height: 48,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-    marginBottom: 24,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: '#FFBF69',
-  },
-  line: {
-    width: '100%',
-    height: 1,
-    backgroundColor: '#606060',
-    marginBottom: 24,
-  },
-  loginButton: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#F08080',
-    borderRadius: 4,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#2A6F97',
+    marginBottom: 16,
   },
-  googleButton: {
-    width: '100%',
+  input: {
+    width: '85%',
     height: 50,
+    borderWidth: 1,
+    borderColor: '#aaa',
     borderRadius: 4,
+    textAlign: 'center',
+    fontSize: 18,
+    paddingHorizontal: 10,
     marginBottom: 24,
-    backgroundColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  googleContent: {
+  scrollView: {
+    width: '100%',
+    maxHeight: 450,
+  },
+  scrollViewContent: {
+    alignItems: 'center',
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    width: '85%',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+    leftBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: 215,
+      height: 50,
+      padding: 8,
+      borderWidth: 1,
+      borderColor: '#aaa',
+      borderRadius: 4,
+      justifyContent: 'space-between', 
+    },    
+  editableText: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  googleLogo: {
-    width: 16,
-    height: 16,
-    marginRight: 8,
-  },
-  googleButtonText: {
-    fontSize: 16,
-    color: '#606060',
-  },
-  registerContainer: {
-    marginBottom: 24,
-  },
-  registerText: {
+  textInput: {
     fontSize: 14,
-    color: '#606060',
-  },
-  registerButton: {
     width: '100%',
+    textAlign: 'center',
+    color: '#2A6F97',
+  },
+  editIcon: {
+    alignSelf: 'flex-end',
+    marginLeft: 8,
+  },
+  text: {
+    fontWeight:'bold',
+    textAlign: 'left',
+    fontSize: 14,
+    color: '#2A6F97',
+  },
+  rightBox: {
+    width: 57,
     height: 50,
-    backgroundColor: '#FFBF69',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 4,
+  },
+  number: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2A6F97',
+  },
+
+  buttonContainer: { 
+    flexDirection: 'row', 
+    gap:24,
+    marginTop: 8,
+  },
+  addButton: { 
+    flexDirection: 'row', 
+    backgroundColor: '#2A6F97', 
+    padding: 8, 
+    borderRadius: 4, 
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: { 
+    color: '#fff', 
+    fontSize: 14, 
+    textAlign: 'center',
+    marginLeft: 8,
+  },
+  deleteButton: {
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight:8,
+  },  
+  deleteModeButton: { 
+    flexDirection: 'row', 
+    backgroundColor: '#606060', 
+    padding: 8, 
+    borderRadius: 4, 
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteModeActive: { 
+    backgroundColor: '#606060' 
+  },
+  checkButton: {
+    width: '85%',
+    height: 50,
+    backgroundColor: '#2A6F97',
     borderRadius: 4,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
+  },
+  checkButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  checkButton: {
+    width: '85%',
+    height:50,  
+    position: 'absolute',
+    bottom: 104, 
+    backgroundColor: '#2A6F97',
+    padding: 15,
+    borderRadius: 4,
+    alignItems: 'center',
+    alignSelf: 'center',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 4,
+  },  
+  checkButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  menuContainer: {
+    width: 402,
+    height: 80,
+    backgroundColor: '#89C2D9',
+    position: 'absolute',
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  registerButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  iconContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal:16,
+    paddingBottom: 16,
   },
-  copyright: {
-    position: 'absolute',
-    bottom: 24,
+  menuIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#fff',
+  },
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconText: {
+    color: '#fff',
+    marginTop: 8,
     fontSize: 12,
-    color: '#aaa',
   },
 });
