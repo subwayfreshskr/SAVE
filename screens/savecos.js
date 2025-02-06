@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Svg, Text as SVGText } from 'react-native-svg';
 import {
   StyleSheet,
   View,
@@ -20,6 +21,8 @@ const screenWidth = Dimensions.get('window').width;
 const pieChartWidth = screenWidth * 0.85;
 // 左右欄位組件
 const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
+  const [leftBoxFocused, setLeftBoxFocused] = useState(false);
+  const [rightBoxFocused, setRightBoxFocused] = useState(false);
   const [isEditingLeft, setIsEditingLeft] = useState(false);
   const [isEditingRight, setIsEditingRight] = useState(false);
   const slideAnim = useState(new Animated.Value(0))[0];
@@ -35,7 +38,7 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
   return (
     <View style={styles.rowContainer}>
       {/* 左側欄位 */}
-      <View style={styles.leftBox}>
+      <View style={[styles.leftBox,leftBoxFocused && styles.focusedBox]}>
   {isDeleteMode && (
     <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
       <Icon name="delete" size={20} color="#606060" />
@@ -47,10 +50,16 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
       value={leftText}
       onChangeText={setLeftText}
       autoFocus
-      onBlur={() => setIsEditingLeft(false)}
+      onFocus={() => setLeftBoxFocused(true)}
+      onBlur={() => {setLeftBoxFocused(false);setIsEditingLeft(false);
+      }}
     />
   ) : (
-    <TouchableOpacity onPress={() => setIsEditingLeft(true)} style={styles.editableText}>
+    <TouchableOpacity onPress={() => {
+      setIsEditingLeft(true);
+      setLeftBoxFocused(true);
+    }} 
+     style={styles.editableText}>
       <Text style={styles.text}>{leftText}</Text>
       <Icon name="edit" size={20} color="#2A6F97" style={styles.editIcon} />
     </TouchableOpacity>
@@ -59,7 +68,7 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
 
 
       {/* 右側欄位 */}
-      <View style={styles.rightBox}>
+      <View style={[styles.rightBox,rightBoxFocused && styles.focusedBox]}>
         {isEditingRight ? (
           <TextInput
             style={styles.textInput}
@@ -86,10 +95,17 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
             }}
             keyboardType="numeric"
             autoFocus
-            onBlur={() => setIsEditingRight(false)}
+            onFocus={() => setRightBoxFocused(true)}
+            onBlur={() => {
+              setRightBoxFocused(false);
+              setIsEditingRight(false);
+            }}
           />
         ) : (
-          <TouchableOpacity onPress={() => setIsEditingRight(true)}>
+          <TouchableOpacity onPress={() => {
+            setIsEditingRight(true);
+            setRightBoxFocused(true);
+          }}>
             <Text style={styles.number}>{rightNumber}</Text>
           </TouchableOpacity>
         )}
@@ -99,45 +115,69 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
 };
 
 export default function Savecos({ navigation }) {
-  // 初始化多組數據
+  const [isFocused, setIsFocused] = useState(false);
+  const [salary, setSalary] = useState('');
   const [rowData, setRowData] = useState([
     { id: 1, leftText: '生活開銷', rightNumber: '6' },
     { id: 2, leftText: '存錢', rightNumber: '3' },
     { id: 3, leftText: '風險管理', rightNumber: '1' },
   ]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
-   // 新增項目
-   const addNewRow = () => {
+
+  const addNewRow = () => {
+    if (rowData.length >= 10) {
+      Alert.alert("最多只能有 10 個項目！");
+      return;
+    }
     const newId = rowData.length + 1;
     setRowData([...rowData, { id: newId, leftText: '新項目', rightNumber: '0' }]);
   };
+
   const deleteRow = (id) => {
     setRowData(rowData.filter((item) => item.id !== id));
   };
 
-  const chartData = rowData.map((item, index) => ({
-    name: item.leftText,
-    population: isNaN(parseInt(item.rightNumber, 10)) ? 0 : parseInt(item.rightNumber, 10),
-    color: ['#a9d6e5', '#89c2d9', '#61a5c2', '#468faf', '#2c7da0', '#2a6f97', '#014f86', '#01497c', '#013a63', '#012a4a'][index % 10],
-    legendFontColor: '#333',
-    legendFontSize: 14,
-  }));
+  const calculateAmounts = () => {
+    const salaryNum = parseFloat(salary) || 0;
+    const total = rowData.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
+    
+    return rowData.map((item, index) => {
+      const ratio = parseInt(item.rightNumber, 10) / total;
+      const amount = salaryNum * ratio;
+      
+      return {
+        name: `${item.leftText}\n$${amount.toLocaleString()}`, 
+        population: parseInt(item.rightNumber, 10),
+        color: ['#a9d6e5', '#89c2d9', '#61a5c2', '#468faf', '#2c7da0', '#2a6f97', '#014f86', '#01497c', '#013a63', '#012a4a'][index % 10],
+        legendFontColor: '#101010',
+        legendFontSize: 14,
+      };
+    });
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* Logo 區塊 */}
         <View style={styles.logoContainer}>
           <Image source={require('../assets/LOGO.png')} style={styles.logo} />
         </View>
 
         <Text style={styles.title}>請輸入本月薪水金額</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, isFocused && styles.inputFocused]}
           placeholder="輸入金額"
           placeholderTextColor="#ccc"
           keyboardType="numeric"
+          value={salary}
+          onChangeText={(text) => {
+            const numericValue = text.replace(/[^0-9]/g, '');
+            setSalary(numericValue);
+          }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
         />
-         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
+
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {rowData.map((item) => (
             <RowItem
               key={item.id}
@@ -161,33 +201,35 @@ export default function Savecos({ navigation }) {
               isDeleteMode={isDeleteMode}
             />
           ))}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.addButton} onPress={addNewRow}>
-            <Icon name="add-circle" size={24} color="#fff" />
-            <Text style={styles.addButtonText}>新增</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.deleteModeButton, isDeleteMode && styles.deleteModeActive]}
-            onPress={() => setIsDeleteMode(!isDeleteMode)}
-          >
-            <Icon name="delete" size={24} color="#fff" />
-            <Text style={styles.addButtonText}>{isDeleteMode ? '完成' : '刪除'}</Text>
-          </TouchableOpacity>
-        </View>
-        <PieChart
-    data={chartData}
-    width={pieChartWidth} // 設定寬度為 85% 的螢幕寬度
-    height={220}
-    chartConfig={{
-      backgroundGradientFrom: '#fff',
-      backgroundGradientTo: '#fff',
-      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    }}
-    accessor="population"
-    backgroundColor="transparent"
-    paddingLeft="15"
-    absolute
-  />
+          
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.addButton} onPress={addNewRow}>
+              <Icon name="add-circle" size={24} color="#fff" />
+              <Text style={styles.addButtonText}>新增</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.deleteModeButton, isDeleteMode && styles.deleteModeActive]}
+              onPress={() => setIsDeleteMode(!isDeleteMode)}
+            >
+              <Icon name="delete" size={24} color="#fff" />
+              <Text style={styles.addButtonText}>{isDeleteMode ? '完成' : '刪除'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <PieChart
+            data={calculateAmounts()}
+            width={pieChartWidth}
+            height={220}
+            chartConfig={{
+              backgroundGradientFrom: '#fff',
+              backgroundGradientTo: '#fff',
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            }}
+            accessor="population"
+            backgroundColor="transparent"
+            paddingLeft="15"
+            absolute
+          />
         </ScrollView>
         {/* 查看按鈕 */}
         <TouchableOpacity style={styles.checkButton}>
@@ -254,6 +296,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 24,
   },
+  inputFocused: {
+    borderColor: '#2A6F97',
+  },
   scrollView: {
     width: '100%',
     maxHeight: 450,
@@ -314,7 +359,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2A6F97',
   },
-
+  focusedBox: {
+    borderColor: '#2A6F97',
+  },
   buttonContainer: { 
     flexDirection: 'row', 
     gap:24,
