@@ -247,10 +247,13 @@ export default function Savecos({ navigation }) {
               <Image source={require('../assets/home.png')} style={styles.menuIcon} />
               <Text style={styles.iconText}>主頁</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconWrapper}>
-              <Image source={require('../assets/setting.png')} style={styles.menuIcon} />
-              <Text style={styles.iconText}>設定</Text>
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('Setting')}>
+                  <Image 
+                    source={require('../assets/setting.png')}
+                    style={styles.menuIcon}
+                  />
+                  <Text style={styles.iconText}>設定</Text>
+                </TouchableOpacity>
           </View>
         </View>
       </View>

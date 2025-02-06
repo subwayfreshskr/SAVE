@@ -10,6 +10,7 @@ import Main2Screen from './screens/Main2Screen';
 import save365 from './screens/save365';
 import save52 from './screens/save52';
 import savecos from './screens/savecos';
+import Setting from './screens/setting';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         <Stack.Screen name="save365" component={save365} options={{gestureEnabled:false}}/>
         <Stack.Screen name="save52" component={save52} options={{gestureEnabled:false}}/>
         <Stack.Screen name="savecos" component={savecos} options={{gestureEnabled:false}} />
+        <Stack.Screen name="Setting" component={Setting} options={{gestureEnabled:false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
