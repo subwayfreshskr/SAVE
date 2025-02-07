@@ -13,6 +13,7 @@ import savecos from './screens/savecos';
 import Setting from './screens/setting';
 import changepassword from './screens/changepassword';
 import DeleteScreen from './screens/DeleteScreen';
+import securityscreen from './screens/securityscreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
         <Stack.Screen name="Setting" component={Setting} options={{gestureEnabled:false}}/>
         <Stack.Screen name="changepassword" component={changepassword} options={{gestureEnabled:false}}/>
         <Stack.Screen name="Delete" component={DeleteScreen} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="security" component={securityscreen} options={{gestureEnabled:false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

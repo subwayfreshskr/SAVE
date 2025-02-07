@@ -11,8 +11,6 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import PasswordInput from './Components/PasswordInput';
-import AccountInput from './Components/AccountInput';
 
 export default function setting({ navigation }) {
  const handleExit = () => {
@@ -48,7 +46,7 @@ export default function setting({ navigation }) {
         <Text style={styles.sectionTitle}>我的帳戶</Text>
         <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('changepassword')}><Text>更改密碼</Text></TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('Delete')}><Text>刪除帳戶</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}><Text>隱私權保護政策</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('security')}><Text>隱私權保護政策</Text></TouchableOpacity>
 
         <Text style={styles.sectionTitle}>關於計畫</Text>
         <TouchableOpacity style={styles.menuItem}><Text>計畫進度</Text></TouchableOpacity>
