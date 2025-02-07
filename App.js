@@ -11,6 +11,8 @@ import save365 from './screens/save365';
 import save52 from './screens/save52';
 import savecos from './screens/savecos';
 import Setting from './screens/setting';
+import changepassword from './screens/changepassword';
+import DeleteScreen from './screens/DeleteScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -32,6 +34,8 @@ export default function App() {
         <Stack.Screen name="save52" component={save52} options={{gestureEnabled:false}}/>
         <Stack.Screen name="savecos" component={savecos} options={{gestureEnabled:false}} />
         <Stack.Screen name="Setting" component={Setting} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="changepassword" component={changepassword} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="Delete" component={DeleteScreen} options={{gestureEnabled:false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

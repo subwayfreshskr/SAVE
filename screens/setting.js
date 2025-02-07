@@ -46,8 +46,8 @@ export default function setting({ navigation }) {
         {/* 設定選單 */}
       <View style={styles.menu}>
         <Text style={styles.sectionTitle}>我的帳戶</Text>
-        <TouchableOpacity style={styles.menuItem}><Text>更改密碼</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}><Text>刪除帳戶</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('changepassword')}><Text>更改密碼</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('Delete')}><Text>刪除帳戶</Text></TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}><Text>隱私權保護政策</Text></TouchableOpacity>
 
         <Text style={styles.sectionTitle}>關於計畫</Text>
@@ -71,14 +71,14 @@ export default function setting({ navigation }) {
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper}>
             <Image 
-              source={require('../assets/home.png')}
+              source={require('../assets/home-line.png')}
               style={styles.menuIcon}
             />
             <Text style={styles.iconText}>主頁</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('Setting')}>
                 <Image 
-                  source={require('../assets/setting.png')}
+                  source={require('../assets/setting1.png')}
                   style={styles.menuIcon}
                 />
                 <Text style={styles.iconText}>設定</Text>

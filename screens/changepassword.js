@@ -15,7 +15,7 @@ import PasswordInput from './Components/PasswordInput';
 import AccountInput from './Components/AccountInput';
 import PhoneInput from './Components/PhoneInput';
 
-export default function ForgetScreen({ navigation }) {
+export default function changepassword({ navigation }) {
     const [password, setPassword] = useState('');
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [isPasswordFocused, setIsPasswordFocused] = useState(false);
@@ -74,9 +74,6 @@ export default function ForgetScreen({ navigation }) {
     const handleSendCode = () => {
         console.log('發送驗證碼到：', phone);
       };
-      const handleBack = () => {
-        navigation.navigate('Login');
-      };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -84,7 +81,7 @@ export default function ForgetScreen({ navigation }) {
         {/* 返回按鈕 */}
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.navigate('Login')}
+          onPress={() => navigation.navigate('Setting')}
         >
           <Text style={styles.backText}>回上一頁</Text>
         </TouchableOpacity>
@@ -97,7 +94,7 @@ export default function ForgetScreen({ navigation }) {
         </View>
 
         {/* 標題 */}
-        <Text style={styles.title}>忘記密碼</Text>
+        <Text style={styles.title}>更改密碼</Text>
         {/* 手機驗證 */}
         <PhoneInput
       phoneValue={phone}
