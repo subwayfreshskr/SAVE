@@ -50,8 +50,29 @@ export default function setting({ navigation }) {
 
         <Text style={styles.sectionTitle}>關於計畫</Text>
         <TouchableOpacity style={styles.menuItem}><Text>計畫進度</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}><Text>變更計畫</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}><Text>通知</Text></TouchableOpacity>
+        <TouchableOpacity 
+  style={styles.menuItem} 
+  onPress={() => {
+    Alert.alert(
+      '確認',
+      '您確定要變更計畫嗎？',
+      [
+        {
+          text: '取消',
+          style: 'cancel',
+        },
+        {
+          text: '確認',
+          onPress: () => navigation.navigate('MainScreen'),
+        },
+      ],
+      { cancelable: false }
+    );
+  }}
+>
+  <Text>變更計畫</Text>
+</TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('notify')}><Text>通知</Text></TouchableOpacity>
       </View>
         {/* 登出按鈕 */}
         <TouchableOpacity style={styles.ExitButton} onPress={handleExit}>
