@@ -15,6 +15,7 @@ import changepassword from './screens/changepassword';
 import DeleteScreen from './screens/DeleteScreen';
 import securityscreen from './screens/securityscreen';
 import notify from './screens/notify';
+import HistoryScreen from './screens/HistoryScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
         <Stack.Screen name="Delete" component={DeleteScreen} options={{gestureEnabled:false}}/>
         <Stack.Screen name="security" component={securityscreen} options={{gestureEnabled:false}}/>
         <Stack.Screen name="notify" component={notify} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="History" component={HistoryScreen} options={{gestureEnabled:false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

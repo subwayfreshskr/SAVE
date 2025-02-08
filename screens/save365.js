@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,46 +8,99 @@ import {
   Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Save365({ navigation }) {
-  // 存儲已點擊的圓圈
   const [selectedCircles, setSelectedCircles] = useState({});
-  // 當前頁面索引
   const [currentPage, setCurrentPage] = useState(0);
-  // 用於滑動動畫的值
   const [slideAnim] = useState(new Animated.Value(0));
+  const [history, setHistory] = useState([]); 
+  const [fadeAnim] = useState(new Animated.Value(1));
 
-  // 導航處理
-  const handleLeftArrow = () => {
-    handlePageChange('prev');
+  // 加載保存的數據
+  useEffect(() => {
+    loadSavedData();
+  }, []);
+
+  // 從 AsyncStorage 加載數據
+  const loadSavedData = async () => {
+    try {
+      const savedHistory = await AsyncStorage.getItem('savingHistory');
+      const savedCircles = await AsyncStorage.getItem('selectedCircles');
+      
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory));
+      }
+      if (savedCircles) {
+        setSelectedCircles(JSON.parse(savedCircles));
+      }
+    } catch (error) {
+      console.error('Error loading saved data:', error);
+    }
   };
-  
-  const handleRightArrow = () => {
-    handlePageChange('next');
+
+  // 保存數據到 AsyncStorage
+  const saveData = async (newHistory, newSelectedCircles) => {
+    try {
+      await AsyncStorage.setItem('savingHistory', JSON.stringify(newHistory));
+      await AsyncStorage.setItem('selectedCircles', JSON.stringify(newSelectedCircles));
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
   };
   
   const handleCirclePress = (number) => {
-    setSelectedCircles(prev => ({
-      ...prev,
-      [number]: prev[number] ? null : require('../assets/check.png') // 切換不同的圖片
-    }));
+    const currentDate = new Date().toLocaleDateString();
+
+    // 更新選中狀態
+    const newSelectedCircles = {
+      ...selectedCircles,
+      [number]: selectedCircles[number] ? null : require('../assets/check.png')
+    };
+    setSelectedCircles(newSelectedCircles);
+
+    // 更新歷史記錄
+    const newHistory = selectedCircles[number]
+      ? history.filter(item => item.number !== number)
+      : [...history, { number, date: currentDate }];
+    setHistory(newHistory);
+
+    // 保存到 AsyncStorage
+    saveData(newHistory, newSelectedCircles);
   };
 
+  const handlePageChange = (direction) => {
+    if ((direction === 'next' && currentPage >= pages.length - 1) || 
+        (direction === 'prev' && currentPage <= 0)) {
+      return;
+    }
   
-  const [fadeAnim] = useState(new Animated.Value(1));
+    Animated.timing(fadeAnim, {
+      toValue: 0.3,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setCurrentPage(prevPage => 
+        direction === 'next' ? prevPage + 1 : prevPage - 1
+      );
+  
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
 
   // 生成所有頁面的數字
   const pages = [];
   const totalNumbers = 365;
   const numbersPerPage = 32;
   
-  // 將 1-365 拆分成多個陣列，每頁最多 32 個
   for (let i = 0; i < totalNumbers; i += numbersPerPage) {
     pages.push(Array.from({ length: Math.min(numbersPerPage, totalNumbers - i) }, (_, j) => i + j + 1));
   }
-  
 
-  // 將當前頁的數字分成每行4個
   const getCurrentPageRows = () => {
     const currentNumbers = pages[currentPage];
     const rows = [];
@@ -57,32 +110,6 @@ export default function Save365({ navigation }) {
     return rows;
   };
 
-  // 處理翻頁
-  const handlePageChange = (direction) => {
-    if ((direction === 'next' && currentPage >= pages.length - 1) || 
-        (direction === 'prev' && currentPage <= 0)) {
-          console.log('!!!',currentPage)
-      return; // 避免超出範圍
-    }
-    console.log(currentPage)
-  
-    Animated.timing(fadeAnim, {
-      toValue: 0.3, // 先淡出
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      setCurrentPage(prevPage => 
-        direction === 'next' ? prevPage + 1 : prevPage - 1
-      );
-  
-      Animated.timing(fadeAnim, {
-        toValue: 1, // 再淡入
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    });
-  };
-  
   return (
     <View style={styles.container}>
       {/* Logo 區塊 */}
@@ -93,26 +120,25 @@ export default function Save365({ navigation }) {
         />
       </View>
 
-      {/* 左箭頭（第一頁不顯示） */}
-{currentPage > 0 && (
-  <TouchableOpacity 
-    style={styles.arrowLeft}
-    onPress={() => handlePageChange('prev')}
-  >
-    <Icon name="arrow-back-ios" size={24} color="#EA4335" />
-  </TouchableOpacity>
-)}
+      {/* 左箭頭 */}
+      {currentPage > 0 && (
+        <TouchableOpacity 
+          style={styles.arrowLeft}
+          onPress={() => handlePageChange('prev')}
+        >
+          <Icon name="arrow-back-ios" size={24} color="#EA4335" />
+        </TouchableOpacity>
+      )}
 
-{/* 右箭頭（最後一頁不顯示） */}
-{currentPage < pages.length - 1 && (
-  <TouchableOpacity 
-    style={styles.arrowRight}
-    onPress={() => handlePageChange('next')}
-  >
-    <Icon name="arrow-forward-ios" size={24} color="#EA4335" />
-  </TouchableOpacity>
-)}
-
+      {/* 右箭頭 */}
+      {currentPage < pages.length - 1 && (
+        <TouchableOpacity 
+          style={styles.arrowRight}
+          onPress={() => handlePageChange('next')}
+        >
+          <Icon name="arrow-forward-ios" size={24} color="#EA4335" />
+        </TouchableOpacity>
+      )}
 
       {/* 數字網格區域 */}
       <View style={styles.calendarContainer}>
@@ -123,37 +149,31 @@ export default function Save365({ navigation }) {
         >
         </TouchableOpacity>
 
-        <Animated.View 
-  style={[
-    styles.numbersContainer,
-    { opacity: fadeAnim }
-  ]}
->
-  {getCurrentPageRows().map((row, rowIndex) => (
-    <View key={rowIndex} style={styles.row}>
-      {row.map((number) => (
-        <TouchableOpacity
-          key={number}
-          style={[
-            styles.circle,
-            selectedCircles[number] && styles.selectedCircle
-          ]}
-          onPress={() => handleCirclePress(number)}
-        >
-          {selectedCircles[number] ? (
-            <Image
-              source={require('../assets/check.png')}
-              style={styles.checkMark}
-            />
-          ) : (
-            <Text style={styles.number}>{number}</Text>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
-  ))}
-</Animated.View>
-
+        <Animated.View style={[styles.numbersContainer, { opacity: fadeAnim }]}>
+          {getCurrentPageRows().map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.row}>
+              {row.map((number) => (
+                <TouchableOpacity
+                  key={number}
+                  style={[
+                    styles.circle,
+                    selectedCircles[number] && styles.selectedCircle
+                  ]}
+                  onPress={() => handleCirclePress(number)}
+                >
+                  {selectedCircles[number] ? (
+                    <Image
+                      source={require('../assets/check.png')}
+                      style={styles.checkMark}
+                    />
+                  ) : (
+                    <Text style={styles.number}>{number}</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </Animated.View>
 
         <TouchableOpacity 
           style={styles.arrow}
@@ -164,7 +184,10 @@ export default function Save365({ navigation }) {
       </View>
 
       {/* 查看按鈕 */}
-      <TouchableOpacity style={styles.checkButton}>
+      <TouchableOpacity 
+        style={styles.checkButton}
+        onPress={() => navigation.navigate('History', { history })}
+      >
         <Text style={styles.checkButtonText}>查看目前已存金額</Text>
       </TouchableOpacity>
 
@@ -185,13 +208,16 @@ export default function Save365({ navigation }) {
             />
             <Text style={styles.iconText}>主頁</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('Setting')}>
-      <Image 
-        source={require('../assets/setting.png')}
-        style={styles.menuIcon}
-      />
-      <Text style={styles.iconText}>設定</Text>
-    </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.iconWrapper} 
+            onPress={() => navigation.navigate('Setting')}
+          >
+            <Image 
+              source={require('../assets/setting.png')}
+              style={styles.menuIcon}
+            />
+            <Text style={styles.iconText}>設定</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
