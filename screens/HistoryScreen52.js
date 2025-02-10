@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-export default function HistoryScreen({ route, navigation }) {
+export default function HistoryScreen52({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 16;
     const history = [...(route.params.history || [])].reverse();
@@ -69,7 +69,7 @@ export default function HistoryScreen({ route, navigation }) {
                 {/* 返回按鈕 */}
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => navigation.navigate('save365')}
+                    onPress={() => navigation.navigate('save52')}
                 >
                     <Text style={styles.backText}>回上一頁</Text>
                 </TouchableOpacity>
@@ -102,7 +102,7 @@ export default function HistoryScreen({ route, navigation }) {
                                 style={styles.arrowLeft}
                                 onPress={() => handlePageChange('prev')}
                             >
-                                <Icon name="arrow-back-ios" size={24} color="#EA4335" />
+                                <Icon name="arrow-back-ios" size={24} color="#FBBE0D" />
                             </TouchableOpacity>
                         )}
 
@@ -112,7 +112,7 @@ export default function HistoryScreen({ route, navigation }) {
                                 style={styles.arrowRight}
                                 onPress={() => handlePageChange('next')}
                             >
-                                <Icon name="arrow-forward-ios" size={24} color="#EA4335" />
+                                <Icon name="arrow-forward-ios" size={24} color="#FBBE0D" />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     logoContainer: {
         width: '100%',
         height: 100,
-        backgroundColor: '#F08080',
+        backgroundColor: '#EEDA58',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#EA4355',
+        color: '#FBBE0D',
         marginBottom: 16,
         textAlign: 'center',
     },
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     totalText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#EA4335',
+        color: '#FBBE0D',
     },
     backButton: {
         position: 'absolute',
@@ -227,9 +227,9 @@ const styles = StyleSheet.create({
         gap: 14,
     },
     record: {
-        borderColor: '#EA4335',
+        borderColor: '#FBBE0D',
         borderWidth: 3,
-        backgroundColor: '#FFAFAF',
+        backgroundColor: '#F8EAB3',
         padding: 8,
         borderRadius: 50,
         width: 65,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     numberText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#EA4335',
+        color: '#FBBE0D',
     },
     dateText: {
         fontSize: 12,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     menuContainer: {
         width: '100%',
         height: 80,
-        backgroundColor: '#F08080',
+        backgroundColor: '#EEDA58',
         position: 'absolute',
         bottom: 0,
         alignItems: 'center',
