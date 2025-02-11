@@ -1,3 +1,4 @@
+// Save52.js
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -23,7 +24,6 @@ export default function Save52({ navigation }) {
   const [fadeAnim] = useState(new Animated.Value(1));
   const [inputValue, setInputValue] = useState('');
 
-  // 加載保存的數據
   useEffect(() => {
     loadSavedData();
   }, []);
@@ -32,12 +32,16 @@ export default function Save52({ navigation }) {
     try {
       const savedHistory = await AsyncStorage.getItem('save52History');
       const savedCircles = await AsyncStorage.getItem('save52Circles');
+      const savedSalary = await AsyncStorage.getItem('save52Salary');
       
       if (savedHistory) {
         setHistory(JSON.parse(savedHistory));
       }
       if (savedCircles) {
         setSelectedCircles(JSON.parse(savedCircles));
+      }
+      if (savedSalary) {
+        setSalary(savedSalary);
       }
     } catch (error) {
       console.error('Error loading saved data:', error);
@@ -48,33 +52,54 @@ export default function Save52({ navigation }) {
     try {
       await AsyncStorage.setItem('save52History', JSON.stringify(newHistory));
       await AsyncStorage.setItem('save52Circles', JSON.stringify(newSelectedCircles));
+      await AsyncStorage.setItem('save52Salary', salary);
     } catch (error) {
       console.error('Error saving data:', error);
     }
   };
-  
-  const handleCirclePress = (number) => {
+
+  const handleCirclePress = async (number) => {
     const currentDate = new Date().toLocaleDateString();
-  
-    // 更新選中狀態
-    const newSelectedCircles = {
-      ...selectedCircles,
-      [number]: selectedCircles[number] ? null : require('../assets/check52.png')
-    };
-    setSelectedCircles(newSelectedCircles);
-  
-    // 更新歷史記錄，加入金額資訊
-    const newHistory = selectedCircles[number]
-      ? history.filter(item => item.number !== number)
-      : [...history, { 
-          number, 
+    
+    // 檢查這個圈圈是否已經在歷史記錄中
+    const existingRecord = history.find(item => item.number === number);
+
+    if (selectedCircles[number]) {
+      // 如果圈圈已經被選中，則取消選中
+      const newSelectedCircles = { ...selectedCircles };
+      delete newSelectedCircles[number];
+      setSelectedCircles(newSelectedCircles);
+
+      // 從歷史記錄中移除
+      const newHistory = history.filter(item => item.number !== number);
+      setHistory(newHistory);
+
+      // 保存更新後的數據
+      await saveData(newHistory, newSelectedCircles);
+    } else {
+      // 如果圈圈未被選中
+      const newSelectedCircles = {
+        ...selectedCircles,
+        [number]: require('../assets/check52.png')
+      };
+      setSelectedCircles(newSelectedCircles);
+
+      let newHistory;
+      if (existingRecord) {
+        // 如果這個圈圈之前存在記錄，保留原來的金額
+        newHistory = [...history];
+      } else {
+        // 如果是新的圈圈，使用當前輸入的金額
+        newHistory = [...history, {
+          number,
           date: currentDate,
-          amount: salary // 使用輸入的工資金額
+          amount: salary || '0',  // 儲存選中時的金額
         }];
-    setHistory(newHistory);
-  
-    // 保存到 AsyncStorage
-    saveData(newHistory, newSelectedCircles);
+      }
+      
+      setHistory(newHistory);
+      await saveData(newHistory, newSelectedCircles);
+    }
   };
 
   const handlePageChange = (direction) => {
@@ -100,11 +125,8 @@ export default function Save52({ navigation }) {
     });
   };
 
-  // 生成所有頁面的數字
   const pages = [
-    // 第一頁 1-24
     Array.from({ length: 24 }, (_, i) => i + 1),
-    // 第二頁 25-52
     Array.from({ length: 28 }, (_, i) => i + 25)
   ];
 
@@ -115,6 +137,13 @@ export default function Save52({ navigation }) {
       rows.push(currentNumbers.slice(i, i + 4));
     }
     return rows;
+  };
+
+  const navigateToHistory = () => {
+    navigation.navigate('History52', { 
+      history,
+      currentSalary: salary  // 傳遞當前設定的金額
+    });
   };
 
   return (
@@ -203,11 +232,11 @@ export default function Save52({ navigation }) {
         </View>
 
         <TouchableOpacity 
-          style={styles.checkButton}
-          onPress={() => navigation.navigate('History52', { history })}
-        >
-          <Text style={styles.checkButtonText}>查看目前已存金額</Text>
-        </TouchableOpacity>
+      style={styles.checkButton}
+      onPress={navigateToHistory}  // 使用新的導航函數
+    >
+      <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+    </TouchableOpacity>
 
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
@@ -299,7 +328,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     paddingHorizontal: 24,
   },
-  
   calendarContainerSecondPage: {
     flex: 1,
     paddingTop: 40,
@@ -312,7 +340,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 14,
-    gap:24,
+    gap: 24,
   },
   circle: {
     width: 56,
@@ -330,7 +358,7 @@ const styles = StyleSheet.create({
   number: {
     color: '#FBBE0D',
     fontSize: 16,
-    fontWeight:'bold'
+    fontWeight: 'bold'
   },
   checkMark: {
     width: 56,
@@ -338,9 +366,9 @@ const styles = StyleSheet.create({
   },
   checkButton: {
     width: '85%',
-    height:50,  
+    height: 50,
     position: 'absolute',
-    bottom: 104, 
+    bottom: 104,
     backgroundColor: '#FBBE0D',
     padding: 15,
     borderRadius: 4,
@@ -350,7 +378,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 4,
-  },  
+  },
   checkButtonText: {
     color: '#fff',
     fontSize: 16,
@@ -369,7 +397,7 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal:16,
+    paddingHorizontal: 16,
     paddingBottom: 16,
   },
   menuIcon: {

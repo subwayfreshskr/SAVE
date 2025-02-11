@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
     FlatList,
     StyleSheet,
@@ -10,16 +10,34 @@ import {
     TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HistoryScreen52({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
+    const [salary, setSalary] = useState('');
     const itemsPerPage = 16;
     const history = [...(route.params.history || [])].reverse();
     const totalPages = Math.ceil(history.length / itemsPerPage);
-
+    
+    // 加載保存的 salary
+    useEffect(() => {
+      loadSalary();
+    }, []);
+  
+    const loadSalary = async () => {
+      try {
+        const savedSalary = await AsyncStorage.getItem('save52Salary');
+        if (savedSalary) {
+          setSalary(savedSalary);
+        }
+      } catch (error) {
+        console.error('Error loading salary:', error);
+      }
+    };
+  
     // 計算總金額
-    const totalAmount = route.params.history.reduce((sum, item) => sum + Number(item.number), 0);
-    const formattedTotalAmount = totalAmount.toLocaleString(); 
+    const totalAmount = history.length * Number(salary);
+    const formattedTotalAmount = totalAmount.toLocaleString();
 
     // 獲取當前頁的記錄
     const getCurrentPageData = () => {
@@ -63,7 +81,7 @@ export default function HistoryScreen52({ route, navigation }) {
 
                 {/* 顯示總金額 */}
                 <View style={styles.totalBox}>
-                <Text style={styles.totalText}>$ {formattedTotalAmount}</Text>
+                    <Text style={styles.totalText}>$ {formattedTotalAmount}</Text>
                 </View>
 
                 {/* 返回按鈕 */}
@@ -76,54 +94,54 @@ export default function HistoryScreen52({ route, navigation }) {
 
                 {/* 歷史存款記錄列表 */}
                 <View style={styles.recordsContainer}>
-                    <FlatList
-                        data={getCurrentPageData()}
-                        keyExtractor={(item, index) => index.toString()}
-                        numColumns={4}
-                        columnWrapperStyle={styles.row}
-                        renderItem={({ item }) => {
-                            const dateParts = item.date.split("/");
-                            const formattedDate = `${dateParts[0]}/${dateParts[1]}`;
+                <FlatList
+          data={getCurrentPageData()}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={4}
+          columnWrapperStyle={styles.row}
+          renderItem={({ item }) => {
+            const dateParts = item.date.split("/");
+            const formattedDate = `${dateParts[0]}/${dateParts[1]}`;
 
-                            return (
-                                <View style={styles.record}>
-                                    <Text style={styles.dateText}>{formattedDate}</Text>
-                                    <Text style={styles.numberText}>${item.number}</Text>
-                                </View>
-                            );
-                        }}
-                    />
-                     {/* 分頁控制 - 只有當記錄數超過一頁時才顯示 */}
-                {totalPages > 1 && (
-                    <View style={styles.paginationContainer}>
-                        {/* 左箭頭 */}
-                        {currentPage > 1 && (
-                            <TouchableOpacity
-                                style={styles.arrowLeft}
-                                onPress={() => handlePageChange('prev')}
-                            >
-                                <Icon name="arrow-back-ios" size={24} color="#FBBE0D" />
-                            </TouchableOpacity>
-                        )}
+            return (
+              <View style={styles.record}>
+                <Text style={styles.dateText}>{formattedDate}</Text>
+                <Text style={styles.numberText}>${salary}</Text>
+              </View>
+            );
+          }}
+        />
+                    {/* 分頁控制 */}
+                    {totalPages > 1 && (
+                        <View style={styles.paginationContainer}>
+                            {currentPage > 1 && (
+                                <TouchableOpacity
+                                    style={styles.arrowLeft}
+                                    onPress={() => handlePageChange('prev')}
+                                >
+                                    <Icon name="arrow-back-ios" size={24} color="#FBBE0D" />
+                                </TouchableOpacity>
+                            )}
 
-                        {/* 右箭頭 */}
-                        {currentPage < totalPages && (
-                            <TouchableOpacity
-                                style={styles.arrowRight}
-                                onPress={() => handlePageChange('next')}
-                            >
-                                <Icon name="arrow-forward-ios" size={24} color="#FBBE0D" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                )}
+                            {currentPage < totalPages && (
+                                <TouchableOpacity
+                                    style={styles.arrowRight}
+                                    onPress={() => handlePageChange('next')}
+                                >
+                                    <Icon name="arrow-forward-ios" size={24} color="#FBBE0D" />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )}
                 </View>
+
                 <View style={styles.picContainer}>
-                        <Image
-                            source={require('../assets/52周.png')}
-                            style={styles.pic}
-                        />
-                    </View>                    
+                    <Image
+                        source={require('../assets/52周.png')}
+                        style={styles.pic}
+                    />
+                </View>
+
                 {/* 底部導航欄 */}
                 <View style={styles.menuContainer}>
                     <View style={styles.iconContainer}>
@@ -238,7 +256,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     numberText: {
-        fontSize: 16,
+        fontSize: 12,
         fontWeight: 'bold',
         color: '#FBBE0D',
     },
