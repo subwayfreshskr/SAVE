@@ -81,7 +81,7 @@ export default function setting({ navigation }) {
         {/* 底部導航欄 */}
       <View style={styles.menuContainer}>
         <View style={styles.iconContainer}>
-          <TouchableOpacity style={styles.iconWrapper}>
+          <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
             <Image 
               source={require('../assets/account.png')}
               style={styles.menuIcon}

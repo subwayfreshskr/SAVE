@@ -127,7 +127,7 @@ export default function HistoryScreen({ route, navigation }) {
                 {/* 底部導航欄 */}
                 <View style={styles.menuContainer}>
                     <View style={styles.iconContainer}>
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
                             <Image
                                 source={require('../assets/account.png')}
                                 style={styles.menuIcon}
@@ -136,7 +136,6 @@ export default function HistoryScreen({ route, navigation }) {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.iconWrapper}
-                            onPress={() => navigation.navigate('save365')}
                         >
                             <Image
                                 source={require('../assets/home.png')}

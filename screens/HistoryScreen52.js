@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     FlatList,
     StyleSheet,
@@ -10,33 +10,18 @@ import {
     TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HistoryScreen52({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const [salary, setSalary] = useState('');
-    const itemsPerPage = 16;
     const history = [...(route.params.history || [])].reverse();
+    const currentSalary = route.params.currentSalary || '0';
+    const itemsPerPage = 16;
     const totalPages = Math.ceil(history.length / itemsPerPage);
-    
-    // 加載保存的 salary
-    useEffect(() => {
-      loadSalary();
-    }, []);
-  
-    const loadSalary = async () => {
-      try {
-        const savedSalary = await AsyncStorage.getItem('save52Salary');
-        if (savedSalary) {
-          setSalary(savedSalary);
-        }
-      } catch (error) {
-        console.error('Error loading salary:', error);
-      }
-    };
-  
-    // 計算總金額
-    const totalAmount = history.length * Number(salary);
+
+    // 計算總金額（使用每個記錄保存的實際金額）
+    const totalAmount = history.reduce((sum, record) => {
+        return sum + Number(record.amount);
+    }, 0);
     const formattedTotalAmount = totalAmount.toLocaleString();
 
     // 獲取當前頁的記錄
@@ -94,23 +79,23 @@ export default function HistoryScreen52({ route, navigation }) {
 
                 {/* 歷史存款記錄列表 */}
                 <View style={styles.recordsContainer}>
-                <FlatList
-          data={getCurrentPageData()}
-          keyExtractor={(item, index) => index.toString()}
-          numColumns={4}
-          columnWrapperStyle={styles.row}
-          renderItem={({ item }) => {
-            const dateParts = item.date.split("/");
-            const formattedDate = `${dateParts[0]}/${dateParts[1]}`;
+                    <FlatList
+                        data={getCurrentPageData()}
+                        keyExtractor={(item, index) => index.toString()}
+                        numColumns={4}
+                        columnWrapperStyle={styles.row}
+                        renderItem={({ item }) => {
+                            const dateParts = item.date.split("/");
+                            const formattedDate = `${dateParts[0]}/${dateParts[1]}`;
 
-            return (
-              <View style={styles.record}>
-                <Text style={styles.dateText}>{formattedDate}</Text>
-                <Text style={styles.numberText}>${salary}</Text>
-              </View>
-            );
-          }}
-        />
+                            return (
+                                <View style={styles.record}>
+                                    <Text style={styles.dateText}>{formattedDate}</Text>
+                                    <Text style={styles.numberText}>${item.amount}</Text>
+                                </View>
+                            );
+                        }}
+                    />
                     {/* 分頁控制 */}
                     {totalPages > 1 && (
                         <View style={styles.paginationContainer}>
@@ -145,7 +130,7 @@ export default function HistoryScreen52({ route, navigation }) {
                 {/* 底部導航欄 */}
                 <View style={styles.menuContainer}>
                     <View style={styles.iconContainer}>
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
                             <Image
                                 source={require('../assets/account.png')}
                                 style={styles.menuIcon}
@@ -154,7 +139,6 @@ export default function HistoryScreen52({ route, navigation }) {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.iconWrapper}
-                            onPress={() => navigation.navigate('save365')}
                         >
                             <Image
                                 source={require('../assets/home.png')}
@@ -236,7 +220,7 @@ const styles = StyleSheet.create({
         height: 'auto',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal:16,
+        paddingHorizontal: 16,
     },
     row: {
         justifyContent: 'flex-start',
@@ -251,7 +235,7 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 50,
         width: 65,
-        height:65,
+        height: 65,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -265,7 +249,7 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     picContainer: {
-        position:'absolute',
+        position: 'absolute',
         bottom: 80,
         width: 150,
         height: 150,

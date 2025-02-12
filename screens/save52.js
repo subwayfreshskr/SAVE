@@ -1,4 +1,3 @@
-// Save52.js
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -139,13 +138,6 @@ export default function Save52({ navigation }) {
     return rows;
   };
 
-  const navigateToHistory = () => {
-    navigation.navigate('History52', { 
-      history,
-      currentSalary: salary  // 傳遞當前設定的金額
-    });
-  };
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -232,15 +224,18 @@ export default function Save52({ navigation }) {
         </View>
 
         <TouchableOpacity 
-      style={styles.checkButton}
-      onPress={navigateToHistory}  // 使用新的導航函數
-    >
-      <Text style={styles.checkButtonText}>查看目前已存金額</Text>
-    </TouchableOpacity>
+          style={styles.checkButton}
+          onPress={() => navigation.navigate('History52', { 
+            history,
+            currentSalary: salary
+          })}
+        >
+          <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+        </TouchableOpacity>
 
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
-            <TouchableOpacity style={styles.iconWrapper}>
+            <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
               <Image 
                 source={require('../assets/account.png')}
                 style={styles.menuIcon}
@@ -281,7 +276,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 402,
     height: 100,
-    backgroundColor: '#F08080',
+    backgroundColor: '#EEDA58',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -386,7 +381,7 @@ const styles = StyleSheet.create({
   menuContainer: {
     width: 402,
     height: 80,
-    backgroundColor: '#F08080',
+    backgroundColor: '#EEDA58',
     position: 'absolute',
     bottom: 0,
     alignItems: 'center',

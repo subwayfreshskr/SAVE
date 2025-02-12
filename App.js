@@ -17,6 +17,7 @@ import securityscreen from './screens/securityscreen';
 import notify from './screens/notify';
 import HistoryScreen from './screens/HistoryScreen';
 import HistoryScreen52 from './screens/HistoryScreen52';
+import Accounting from './screens/Accounting';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
         <Stack.Screen name="notify" component={notify} options={{gestureEnabled:false}}/>
         <Stack.Screen name="History" component={HistoryScreen} options={{gestureEnabled:false}}/>
         <Stack.Screen name="History52" component={HistoryScreen52} options={{gestureEnabled:false}}/>
+        <Stack.Screen name="Accounting" component={Accounting} options={{gestureEnabled:false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

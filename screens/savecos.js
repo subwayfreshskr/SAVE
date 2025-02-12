@@ -146,7 +146,7 @@ export default function Savecos({ navigation }) {
       const amount = salaryNum * ratio;
       
       return {
-        name: `${item.leftText}\n$${amount.toLocaleString()}`, 
+        name: `${item.leftText}\n$${amount.toLocaleString()}`,
         population: parseInt(item.rightNumber, 10),
         color: ['#a9d6e5', '#89c2d9', '#61a5c2', '#468faf', '#2c7da0', '#2a6f97', '#014f86', '#01497c', '#013a63', '#012a4a'][index % 10],
         legendFontColor: '#101010',
@@ -217,19 +217,22 @@ export default function Savecos({ navigation }) {
           </View>
 
           <PieChart
-            data={calculateAmounts()}
-            width={pieChartWidth}
-            height={220}
-            chartConfig={{
-              backgroundGradientFrom: '#fff',
-              backgroundGradientTo: '#fff',
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            }}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft="15"
-            absolute
-          />
+  data={calculateAmounts()}
+  width={pieChartWidth}
+  height={220}
+  chartConfig={{
+    backgroundGradientFrom: '#fff',
+    backgroundGradientTo: '#fff',
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+  }}
+  accessor="population"
+  backgroundColor="transparent"
+  paddingLeft="15"
+  absolute
+  hasLegend={true}
+  showValuesOnTopOfBars={false}  // 添加這行
+  showLabels={false}  // 添加這行
+/>
         </ScrollView>
         {/* 查看按鈕 */}
         <TouchableOpacity style={styles.checkButton}>
@@ -239,11 +242,11 @@ export default function Savecos({ navigation }) {
         {/* 底部導航欄 */}
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
-            <TouchableOpacity style={styles.iconWrapper}>
+            <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
               <Image source={require('../assets/account.png')} style={styles.menuIcon} />
               <Text style={styles.iconText}>記帳</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconWrapper}>
+            <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
               <Image source={require('../assets/home.png')} style={styles.menuIcon} />
               <Text style={styles.iconText}>主頁</Text>
             </TouchableOpacity>

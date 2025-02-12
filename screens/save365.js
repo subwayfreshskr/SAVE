@@ -194,14 +194,15 @@ export default function Save365({ navigation }) {
       {/* 底部導航欄 */}
       <View style={styles.menuContainer}>
         <View style={styles.iconContainer}>
-          <TouchableOpacity style={styles.iconWrapper}>
+          <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
             <Image 
               source={require('../assets/account.png')}
               style={styles.menuIcon}
             />
             <Text style={styles.iconText}>記帳</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconWrapper}>
+          <TouchableOpacity style={styles.iconWrapper}
+          onPress={() => navigation.navigate('Accounting')}>
             <Image 
               source={require('../assets/home.png')}
               style={styles.menuIcon}
