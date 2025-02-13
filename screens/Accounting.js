@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   StyleSheet,
   Text,
@@ -42,40 +43,73 @@ export default function Accounting({ navigation }) {
       return newDate;
     });
   };
+
+  useEffect(() => {
+    loadRecords();
+  }, []);
+
+  // 讀取記錄
+  const loadRecords = async () => {
+    try {
+      const savedRecords = await AsyncStorage.getItem('accountingRecords');
+      if (savedRecords !== null) {
+        setRecords(JSON.parse(savedRecords));
+      }
+    } catch (error) {
+      console.error('Error loading records:', error);
+    }
+  };
+
+  // 儲存記錄
+  const saveRecords = async (newRecords) => {
+    try {
+      await AsyncStorage.setItem('accountingRecords', JSON.stringify(newRecords));
+    } catch (error) {
+      console.error('Error saving records:', error);
+    }
+  };
+
+  // 處理新增記錄
+  const handleAddRecord = async (newRecord) => {
+    const updatedRecords = [{
+      items: [newRecord, ...records[0].items]
+    }];
+    setRecords(updatedRecords);
+    await saveRecords(updatedRecords);
+  };
+
   const [records, setRecords] = useState([
     {
-      items: [
-        { 
-          id: '1', 
-          name: '早餐', 
-          amount: 150, 
-          icon: require('../assets/food.png') 
-        },
-        { 
-          id: '2', 
-          name: '五桶好', 
-          amount: 75, 
-          icon: require('../assets/drink.png')
-        },
-        { 
-          id: '3', 
-          name: '捷運', 
-          amount: 200, 
-          icon: require('../assets/transport.png')
-        },
-        { 
-          id: '4', 
-          name: '薪水', 
-          amount: 50000, 
-          icon: require('../assets/salary.png')
-        },
-      ],
-    },
+      items: []
+    }
   ]);
 
-  const handleNewRecord = () => {
-    navigation.navigate('NewRecord'); // 導航到新紀錄頁面
+  // 清除所有記錄
+  const resetAllRecords = async () => {
+    try {
+      // 清除 AsyncStorage 中的記錄
+      await AsyncStorage.removeItem('accountingRecords');
+      // 重置 records 狀態
+      setRecords([{
+        items: []
+      }]);
+    } catch (error) {
+      console.error('Error resetting records:', error);
+    }
   };
+
+  // 將 resetAllRecords 函數添加到 navigation params 中
+  useEffect(() => {
+    navigation.setParams({
+      resetAllRecords: resetAllRecords
+    });
+  }, [navigation]);
+
+  const handleNewRecord = () => {
+  navigation.navigate('NewRecord', {
+    onAddRecord: handleAddRecord
+  });
+};
 
   const handleAnalysis = () => {
     navigation.navigate('Analysis'); // 導航到消費分析頁面

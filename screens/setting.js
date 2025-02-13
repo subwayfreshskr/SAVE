@@ -10,13 +10,31 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function setting({ navigation }) {
- const handleExit = () => {
+  const resetAllRecords = async () => {
+    try {
+      // 清除特定的記帳記錄
+      await AsyncStorage.removeItem('accountingRecords');
+      await AsyncStorage.removeItem('savingHistory');
+      await AsyncStorage.removeItem('selectedCircles');
+      await AsyncStorage.removeItem('save52History');
+      await AsyncStorage.removeItem('save52Circles');
+      await AsyncStorage.removeItem('save52Salary');
+
+     
+      console.log('所有記錄已成功清除');
+    } catch (error) {
+      console.error('清除記錄時發生錯誤:', error);
+      throw error;
+    }
+  };
+
+  const handleExit = () => {
     Alert.alert(
       '登出確認',
-      '您確定要登出嗎？',
+      '您確定要登出嗎？登出後所有記帳紀錄和存錢計畫將被清除',
       [
         {
           text: '取消',
@@ -24,12 +42,21 @@ export default function setting({ navigation }) {
         },
         {
           text: '確認',
-          onPress: () => navigation.navigate('Login'),
+          onPress: async () => {
+            try {
+              await resetAllRecords();
+              navigation.navigate('Login');
+            } catch (error) {
+              Alert.alert('錯誤', '清除記錄時發生錯誤');
+              console.error('Error during logout:', error);
+            }
+          },
         },
       ],
       { cancelable: false }
     );
   };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -54,8 +81,8 @@ export default function setting({ navigation }) {
   style={styles.menuItem} 
   onPress={() => {
     Alert.alert(
-      '確認',
-      '您確定要變更計畫嗎？',
+      '變更確認',
+      '您確定要變更計畫嗎？變更後所有記帳紀錄和存錢計畫將被清除',
       [
         {
           text: '取消',
@@ -63,7 +90,15 @@ export default function setting({ navigation }) {
         },
         {
           text: '確認',
-          onPress: () => navigation.navigate('MainScreen'),
+          onPress: async () => {
+            try {
+              await resetAllRecords();
+              navigation.navigate('MainScreen');
+            } catch (error) {
+              Alert.alert('錯誤', '清除記錄時發生錯誤');
+              console.error('Error during logout:', error);
+            }
+          },
         },
       ],
       { cancelable: false }
