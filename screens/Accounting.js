@@ -18,58 +18,56 @@ import {
 const windowWidth = Dimensions.get('window').width;
 
 export default function Accounting({ navigation }) {
-    // 設定當前日期
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [records, setRecords] = useState([{ items: [] }]);
+  const [displayRecords, setDisplayRecords] = useState([]);
 
-  // 格式化日期
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0]; // 轉換成 YYYY-MM-DD 格式
+    return date.toISOString().split('T')[0];
   };
 
-  useEffect(() => {
-    setCurrentDate(new Date()); // 頁面載入時設置為當天日期
-  }, []);
-
-  // 切換日期
-  const handlePrevDate = () => {
-    setCurrentDate((prevDate) => {
-      let newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() - 1); // 減少一天
-      return newDate;
+  const updateDisplayRecords = () => {
+    const formattedCurrentDate = formatDate(currentDate);
+    // 確保 records[0].items 存在且是陣列
+    const allRecords = records[0]?.items || [];
+    
+    // 使用嚴格比對來過濾記錄
+    const currentDateRecords = allRecords.filter(record => {
+      // 確保 record.date 存在
+      if (!record || !record.date) return false;
+      
+      // 轉換並比對日期
+      const recordDate = formatDate(new Date(record.date));
+      return recordDate === formattedCurrentDate;
     });
+    
+    setDisplayRecords(currentDateRecords);
   };
-
-  const handleNextDate = () => {
-    setCurrentDate((prevDate) => {
-      let newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() + 1); // 增加一天
-      return newDate;
-    });
-  };
-
-  const [records, setRecords] = useState([
-    {
-      items: []
-    }
-  ]);
 
   useEffect(() => {
     loadRecords();
   }, []);
 
-  // 讀取記錄
+  useEffect(() => {
+    updateDisplayRecords();
+  }, [currentDate, records]);
+
+  useEffect(() => {
+    setCurrentDate(new Date());
+  }, []);
+
   const loadRecords = async () => {
     try {
       const savedRecords = await AsyncStorage.getItem('accountingRecords');
       if (savedRecords !== null) {
-        setRecords(JSON.parse(savedRecords));
+        const parsedRecords = JSON.parse(savedRecords);
+        setRecords(parsedRecords);
       }
     } catch (error) {
       console.error('Error loading records:', error);
     }
   };
 
-  // 儲存記錄
   const saveRecords = async (newRecords) => {
     try {
       await AsyncStorage.setItem('accountingRecords', JSON.stringify(newRecords));
@@ -78,25 +76,47 @@ export default function Accounting({ navigation }) {
     }
   };
 
-  // 處理新增記錄
   const handleAddRecord = async (newRecord) => {
-    // 確保 newRecord 包含所有必要的屬性
-    console.log('New Record:', newRecord); // 添加日誌以檢查數據
-
+    // 確保新記錄包含正確的日期
+    const recordToAdd = {
+      ...newRecord,
+      date: formatDate(currentDate) // 使用當前選擇的日期
+    };
+  
     const updatedRecords = [{
-      items: [newRecord, ...records[0].items]
+      items: [recordToAdd, ...records[0].items]
     }];
     
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
   };
 
-  // 清除所有記錄
+  const handleEditRecord = async (editedRecord) => {
+    // 確保編輯的記錄保留原始日期
+    const updatedRecords = [{
+      items: records[0].items.map(record => 
+        record.id === editedRecord.id 
+          ? { ...editedRecord, date: editedRecord.date || record.date }
+          : record
+      )
+    }];
+    
+    setRecords(updatedRecords);
+    await saveRecords(updatedRecords);
+  };
+
+  const handleDeleteRecord = async (recordId) => {
+    const updatedRecords = [{
+      items: records[0].items.filter(record => record.id !== recordId)
+    }];
+    
+    setRecords(updatedRecords);
+    await saveRecords(updatedRecords);
+  };
+
   const resetAllRecords = async () => {
     try {
-      // 清除 AsyncStorage 中的記錄
       await AsyncStorage.removeItem('accountingRecords');
-      // 重置 records 狀態
       setRecords([{
         items: []
       }]);
@@ -105,12 +125,43 @@ export default function Accounting({ navigation }) {
     }
   };
 
-  // 將 resetAllRecords 函數添加到 navigation params 中
   useEffect(() => {
     navigation.setParams({
       resetAllRecords: resetAllRecords
     });
   }, [navigation]);
+
+  const isToday = (date) => {
+    const today = new Date();
+    return formatDate(date) === formatDate(today);
+  };
+
+  const handlePrevDate = () => {
+    setCurrentDate((prevDate) => {
+      let newDate = new Date(prevDate);
+      newDate.setDate(newDate.getDate() - 1);
+      return newDate;
+    });
+  };
+
+  const handleNextDate = () => {
+  // 檢查當前選擇的日期是否為今天
+  if (isToday(currentDate)) {
+    return; // 如果是今天，直接返回不執行任何操作
+  }
+  
+  setCurrentDate((prevDate) => {
+    let newDate = new Date(prevDate);
+    newDate.setDate(newDate.getDate() + 1);
+    
+    // 確保不會超過今天
+    const today = new Date();
+    if (newDate > today) {
+      return today;
+    }
+    return newDate;
+  });
+};
 
   const handleNewRecord = () => {
     navigation.navigate('NewRecord', {
@@ -119,7 +170,7 @@ export default function Accounting({ navigation }) {
   };
 
   const handleAnalysis = () => {
-    navigation.navigate('Analysis'); // 導航到消費分析頁面
+    navigation.navigate('Analysis');
   };
 
   const renderItem = ({ item }) => {
@@ -137,53 +188,33 @@ export default function Accounting({ navigation }) {
     };
     
     return (
-    <View style={styles.recordItem}>
-      <View style={styles.recordLeft}>
-        <Image 
-          source={item.selectedIcon}
-          style={styles.recordIcon}
-          resizeMode="contain"
-        />
-        <Text style={styles.recordName}>{item.name || '未命名'}</Text>
+      <View style={styles.recordItem}>
+        <View style={styles.recordLeft}>
+          <Image 
+            source={item.selectedIcon}
+            style={styles.recordIcon}
+            resizeMode="contain"
+          />
+          <Text style={styles.recordName}>{item.name || '未命名'}</Text>
+        </View>
+        <View style={styles.recordRight}>
+          <Text style={styles.amount}>
+            ${typeof item.amount === 'number' ? item.amount.toLocaleString() : '0'}
+          </Text>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={handleEdit}
+          >
+            <Icon name="edit" size={20} color="#40916C" style={styles.editIcon} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.recordRight}>
-        <Text style={styles.amount}>
-          ${typeof item.amount === 'number' ? item.amount.toLocaleString() : '0'}
-        </Text>
-        <TouchableOpacity 
-          style={styles.editButton}
-          onPress={handleEdit}
-        >
-          <Icon name="edit" size={20} color="#40916C" style={styles.editIcon} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
-const handleEditRecord = async (editedRecord) => {
-  const updatedRecords = [{
-    items: records[0].items.map(record => 
-      record.id === editedRecord.id ? editedRecord : record
-    )
-  }];
-  
-  setRecords(updatedRecords);
-  await saveRecords(updatedRecords);
-};
-
-const handleDeleteRecord = async (recordId) => {
-  const updatedRecords = [{
-    items: records[0].items.filter(record => record.id !== recordId)
-  }];
-  
-  setRecords(updatedRecords);
-  await saveRecords(updatedRecords);
-};
+    );
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* Logo 區塊 */}
         <View style={styles.logoContainer}>
           <Image
             source={require('../assets/LOGO.png')}
@@ -191,7 +222,6 @@ const handleDeleteRecord = async (recordId) => {
           />
         </View>
 
-        {/* 日期導航 */}
         <View style={styles.dateNav}>
           <TouchableOpacity onPress={handlePrevDate}>
             <Image
@@ -200,37 +230,35 @@ const handleDeleteRecord = async (recordId) => {
             />
           </TouchableOpacity>
           <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
-          <TouchableOpacity onPress={handleNextDate}>
+          <TouchableOpacity 
+            onPress={handleNextDate}
+            disabled={isToday(currentDate)}
+          >
             <Image
               source={require('../assets/Vector.png')}
-              style={styles.dateButtonIcon}
+              style={[
+                styles.dateButtonIcon,
+                isToday(currentDate) && styles.disabledButton
+              ]}
             />
           </TouchableOpacity>
         </View>
 
-        {/* 主要內容 */}
         <View style={styles.content}>
-          {records.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Image 
-                source={require('../assets/risk.png')}
-                style={styles.emptyIcon}
-              />
-              <Text style={styles.emptyText}>您尚未有任何紀錄，快去新增吧！</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={records[0].items}
-              renderItem={renderItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.list}
-              style={styles.flatList}
-            />
-          )}
+          <FlatList
+            data={displayRecords}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.list}
+            style={styles.flatList}
+            ListEmptyComponent={() => (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>還沒有記錄快去新增吧！</Text>
+              </View>
+            )}
+          />
         </View>
 
-
-        {/* 操作按鈕 */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={[styles.actionButton, styles.newRecordButton]}
@@ -247,14 +275,13 @@ const handleDeleteRecord = async (recordId) => {
             onPress={handleAnalysis}
           >
             <Image
-              source={require('../assets/analyst.png')} // 請替換成您的圖表圖標
+              source={require('../assets/analyst.png')}
               style={styles.buttonIcon1}
             />
             <Text style={styles.buttonText1}>消費分析</Text>
           </TouchableOpacity>
         </View>
 
-        {/* 底部導航欄 */}
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
             <TouchableOpacity style={styles.iconWrapper}>
@@ -306,20 +333,29 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
   },
+  scrollView: {
+    width: '100%',
+  },
+  scrollViewContent: {
+    alignItems: 'center',
+  },
   dateNav: {
     width: windowWidth,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingVertical:16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor:'#40916C',
-    marginBottom:4,
+    borderBottomColor: '#40916C',
+    marginBottom: 4,
   },
   dateButtonIcon: {
     width: 20,
     height: 20,
+  },
+  disabledButton: {
+    opacity: 0.3,
   },
   dateText: {
     fontSize: 20,
@@ -329,11 +365,13 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 16,
     marginBottom: 80,
+    maxHeight: 500,
   },
   flatList: {
     flex: 1,
   },
   recordItem: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -351,11 +389,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  
   editButton: {
     padding: 4,
   },
-
   editIcon: {
     marginLeft: 8,
   },
@@ -367,9 +403,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 12,
-    borderRadius:4,
+    borderRadius: 4,
   },
-
+  recordName: {
+    fontSize: 16,
+    color: '#000000',
+  },
   buttonContainer: {
     position: 'absolute',
     bottom: 104,
@@ -384,7 +423,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 12,
-    borderRadius:4,
+    borderRadius: 4,
     flex: 1,
     marginHorizontal: 8,
   },
@@ -411,14 +450,14 @@ const styles = StyleSheet.create({
     height: 24,
     marginRight: 8,
     tintColor: '#fff',
-    borderRadius:4,
+    borderRadius: 4,
   },
   buttonIcon1: {
     width: 24,
     height: 24,
     marginRight: 8,
     tintColor: '#40916C',
-    borderRadius:4,
+    borderRadius: 4,
   },
   buttonText: {
     fontSize: 16,
@@ -427,6 +466,16 @@ const styles = StyleSheet.create({
   buttonText1: {
     fontSize: 16,
     color: '#40916C',
+  },
+  emptyState: {
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    margin: 16,
+    color: '#606060',
+    fontSize: 14,
   },
   menuContainer: {
     width: windowWidth,
