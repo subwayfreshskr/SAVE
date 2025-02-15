@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -10,6 +12,7 @@ import {
   Keyboard,
   FlatList,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 
 const windowWidth = Dimensions.get('window').width;
@@ -44,6 +47,12 @@ export default function Accounting({ navigation }) {
     });
   };
 
+  const [records, setRecords] = useState([
+    {
+      items: []
+    }
+  ]);
+
   useEffect(() => {
     loadRecords();
   }, []);
@@ -71,18 +80,16 @@ export default function Accounting({ navigation }) {
 
   // 處理新增記錄
   const handleAddRecord = async (newRecord) => {
+    // 確保 newRecord 包含所有必要的屬性
+    console.log('New Record:', newRecord); // 添加日誌以檢查數據
+
     const updatedRecords = [{
       items: [newRecord, ...records[0].items]
     }];
+    
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
   };
-
-  const [records, setRecords] = useState([
-    {
-      items: []
-    }
-  ]);
 
   // 清除所有記錄
   const resetAllRecords = async () => {
@@ -106,27 +113,72 @@ export default function Accounting({ navigation }) {
   }, [navigation]);
 
   const handleNewRecord = () => {
-  navigation.navigate('NewRecord', {
-    onAddRecord: handleAddRecord
-  });
-};
+    navigation.navigate('NewRecord', {
+      onAddRecord: handleAddRecord
+    });
+  };
 
   const handleAnalysis = () => {
     navigation.navigate('Analysis'); // 導航到消費分析頁面
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }) => {
+    if (!item || item.amount === null || item.amount === undefined) {
+      return null;
+    }
+    
+    const handleEdit = () => {
+      navigation.navigate('NewRecord', {
+        editMode: true,
+        recordData: item,
+        onSaveEdit: handleEditRecord,
+        onDeleteRecord: handleDeleteRecord
+      });
+    };
+    
+    return (
     <View style={styles.recordItem}>
       <View style={styles.recordLeft}>
         <Image 
-          source={item.icon}
+          source={item.selectedIcon}
           style={styles.recordIcon}
+          resizeMode="contain"
         />
-        <Text style={styles.recordName}>{item.name}</Text>
+        <Text style={styles.recordName}>{item.name || '未命名'}</Text>
       </View>
-      <Text style={styles.amount}>${item.amount.toLocaleString()}</Text>
+      <View style={styles.recordRight}>
+        <Text style={styles.amount}>
+          ${typeof item.amount === 'number' ? item.amount.toLocaleString() : '0'}
+        </Text>
+        <TouchableOpacity 
+          style={styles.editButton}
+          onPress={handleEdit}
+        >
+          <Icon name="edit" size={20} color="#40916C" style={styles.editIcon} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
+};
+const handleEditRecord = async (editedRecord) => {
+  const updatedRecords = [{
+    items: records[0].items.map(record => 
+      record.id === editedRecord.id ? editedRecord : record
+    )
+  }];
+  
+  setRecords(updatedRecords);
+  await saveRecords(updatedRecords);
+};
+
+const handleDeleteRecord = async (recordId) => {
+  const updatedRecords = [{
+    items: records[0].items.filter(record => record.id !== recordId)
+  }];
+  
+  setRecords(updatedRecords);
+  await saveRecords(updatedRecords);
+};
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -176,6 +228,7 @@ export default function Accounting({ navigation }) {
             />
           )}
         </View>
+
 
         {/* 操作按鈕 */}
         <View style={styles.buttonContainer}>
@@ -292,6 +345,23 @@ const styles = StyleSheet.create({
   recordLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  recordRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  
+  editButton: {
+    padding: 4,
+  },
+
+  editIcon: {
+    marginLeft: 8,
+  },
+  amount: {
+    fontSize: 16,
+    color: '#000000',
   },
   recordIcon: {
     width: 24,
