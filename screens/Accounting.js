@@ -190,11 +190,16 @@ export default function Accounting({ navigation }) {
     return (
       <View style={styles.recordItem}>
         <View style={styles.recordLeft}>
-          <Image 
-            source={item.selectedIcon}
-            style={styles.recordIcon}
-            resizeMode="contain"
-          />
+          <View style={[
+            styles.iconBackground,
+            { backgroundColor: item.categoryColor }
+          ]}>
+            <Image 
+              source={item.selectedIcon}
+              style={styles.recordIcon}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={styles.recordName}>{item.name || '未命名'}</Text>
         </View>
         <View style={styles.recordRight}>
@@ -399,11 +404,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
   },
+  iconBackground: {
+    width: 32,
+    height: 32,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   recordIcon: {
     width: 24,
     height: 24,
-    marginRight: 12,
-    borderRadius: 4,
+    tintColor: '#FFFFFF',
   },
   recordName: {
     fontSize: 16,

@@ -104,7 +104,7 @@ const CustomKeyboard = ({ value, onChange, onSave, onDelete, editMode }) => {
       if (editMode) {
         onDelete();
       } else {
-        onChange(''); // 重置為空值，會顯示為 $0
+        onChange('');
       }
       return;
     }
@@ -183,7 +183,7 @@ const CustomKeyboard = ({ value, onChange, onSave, onDelete, editMode }) => {
                 keyboardStyles.key,
                 ['backspace', 'minus', 'plus', 'clear', 'done'].includes(key) && keyboardStyles.specialKey,
                 key === 'done' && keyboardStyles.doneKey,
-                key === 'clear' && editMode && keyboardStyles.deleteKey // 添加刪除按鈕的特殊樣式
+                key === 'clear' && editMode && keyboardStyles.deleteKey
               ]}
               onPress={() => handleKeyPress(key)}
             >
@@ -272,6 +272,7 @@ export default function NewRecord({ navigation, route }) {
       category: selectedCategory,
       date: formatDate(currentDate),
       selectedIcon: categoryInfo?.selectedIcon,
+      categoryColor: categoryInfo?.color,
     };
   
     if (!record.amount || !record.selectedIcon) {
