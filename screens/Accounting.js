@@ -12,7 +12,6 @@ import {
   Keyboard,
   FlatList,
   Dimensions,
-  ScrollView,
 } from 'react-native';
 
 const windowWidth = Dimensions.get('window').width;
@@ -337,12 +336,6 @@ const styles = StyleSheet.create({
     marginTop: 54,
     width: 48,
     height: 48,
-  },
-  scrollView: {
-    width: '100%',
-  },
-  scrollViewContent: {
-    alignItems: 'center',
   },
   dateNav: {
     width: windowWidth,

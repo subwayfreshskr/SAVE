@@ -350,11 +350,11 @@ export default function NewRecord({ navigation, route }) {
 
         {/* 返回按鈕 */}
         <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.navigate('Accounting')}
-        >
-          <Text style={styles.backText}>回上一頁</Text>
-        </TouchableOpacity>
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backText}>回上一頁</Text>
+      </TouchableOpacity>
 
         {/* Amount Input */}
         <View style={styles.inputContainer}>
