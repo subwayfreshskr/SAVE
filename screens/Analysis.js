@@ -172,9 +172,29 @@ const categoryColors = {
       decimalPlaces: 2,
     };
   
-    const handleNewRecord = () => {
-      navigation.navigate('NewRecord');
-    };
+    // Analysis.js 中添加：
+const handleAddRecord = async (newRecord) => {
+  try {
+    const savedRecords = await AsyncStorage.getItem('accountingRecords');
+    let records = savedRecords ? JSON.parse(savedRecords) : [{ items: [] }];
+    
+    const updatedRecords = [{
+      items: [newRecord, ...records[0].items]
+    }];
+    
+    await AsyncStorage.setItem('accountingRecords', JSON.stringify(updatedRecords));
+    loadRecords(); // 重新加載數據
+  } catch (error) {
+    console.error('Error adding record:', error);
+  }
+};
+
+// 然後修改 handleNewRecord：
+const handleNewRecord = () => {
+  navigation.navigate('NewRecord', { 
+    onAddRecord: handleAddRecord
+  });
+};
   
     const handleAccounting = () => {
       navigation.navigate('Accounting');
@@ -215,33 +235,47 @@ const categoryColors = {
       </View>
 
       <View style={styles.chartSection}>
-      <View style={styles.chartContainer}>
-        {chartData.length > 0 ? (
-        <>
-           <PieChart
-            key={JSON.stringify(chartData)} // Add this key prop
-            data={chartData}
-            width={windowWidth}
-            height={220}
-            chartConfig={chartConfig}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft="0"
-            center={[windowWidth / 4, 0]}
-            absolute
-            showValues={false}
-        />
-            <View style={[styles.centerCircle, { width: radius * 2, height: radius * 2, borderRadius: radius }]}>
+        <View style={styles.chartOuterContainer}>
+          <View style={styles.chartAndCircleContainer}>
+            <PieChart
+              data={chartData}
+              width={windowWidth * 0.6}
+              height={220}
+              chartConfig={chartConfig}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="0"
+              center={[windowWidth * 0.15, 0]}
+              absolute
+              showValues={false}
+              hasLegend={false}
+            />
+            <View style={[styles.centerCircle, { 
+              width: radius * 2, 
+              height: radius * 2, 
+              borderRadius: radius,
+              position: 'absolute',
+              left: windowWidth * 0.3 - radius,
+              top: '50%',
+              transform: [{ translateY: -radius }]
+            }]}>
               <Text style={styles.centerText}>
-                {totalIncome > 0 ? `+${totalIncome.toLocaleString()}` : totalIncome.toLocaleString()}
-              </Text>
+              {totalIncome >= 0 
+                ? `+${totalIncome.toLocaleString()}`
+                : `${totalIncome.toLocaleString()}`}
+            </Text>
             </View>
-          </>
-        ) : (
-          <Text style={styles.noDataText}>本月還沒有支出記錄</Text>
-        )}
+          </View>
+          <View style={styles.legendContainer}>
+            {chartData.map((data, index) => (
+              <View key={index} style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: data.color }]} />
+                <Text style={styles.legendText}>{data.name}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
-    </View>
       <ScrollView style={styles.categoryListContainer}>
         <View style={styles.categoryList}>
           {getSortedCategories(categoryTotals)
@@ -355,7 +389,58 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   chartSection: {
+    width: '100%',
     alignItems: 'center',
+  },
+  chartOuterContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  chartAndCircleContainer: {
+    width: windowWidth * 0.6,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  legendContainer: {
+    width: windowWidth * 0.35,
+    paddingLeft: 10,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#101010',
+    flex: 1,
+  },
+  legendValue: {
+    fontSize: 12,
+    color: '#101010',
+    marginLeft: 8,
+  },
+  centerCircle: {
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   totalAmount: {
     paddingTop:8,
@@ -363,18 +448,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#40916C',
   },
-  chartContainer: {
-    margin:0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   noDataText: {
     fontSize: 16,
     color: '#666',
     marginVertical: 20,
   },
   categoryListContainer: {
-    maxHeight: 250,
+    maxHeight: 275,
     width: '100%',
   },
   categoryList: {
@@ -403,8 +483,10 @@ const styles = StyleSheet.create({
   marginRight: 12,
   },
   categoryIcon: {
-    width: 24,
+    width: undefined,
     height: 24,
+    aspectRatio: 1,
+    resizeMode: 'contain',
   },
   categoryName: {
     fontSize: 16,
