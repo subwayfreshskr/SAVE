@@ -230,8 +230,8 @@ export default function Savecos({ navigation }) {
   paddingLeft="15"
   absolute
   hasLegend={true}
-  showValuesOnTopOfBars={false}  // 添加這行
-  showLabels={false}  // 添加這行
+  showValuesOnTopOfBars={false}
+  showLabels={false}
 />
         </ScrollView>
         {/* 查看按鈕 */}

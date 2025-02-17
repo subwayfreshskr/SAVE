@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PieChart } from 'react-native-chart-kit';
 import { useNavigation } from '@react-navigation/native';
 
-
 const windowWidth = Dimensions.get('window').width;
 
 const categoryMap = {
@@ -60,7 +59,7 @@ const categoryColors = {
   };
   
   export default function Analysis() {
-    const navigation = useNavigation(); // 添加这一行
+    const navigation = useNavigation();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [records, setRecords] = useState([]);
     const [categoryTotals, setCategoryTotals] = useState({});
@@ -79,7 +78,6 @@ const categoryColors = {
             const currentMonth = currentDate.getMonth();
             const currentYear = currentDate.getFullYear();
             
-            // Filter records for current month
             const monthRecords = parsedRecords[0].items.filter(record => {
               const recordDate = new Date(record.date);
               return recordDate.getMonth() === currentMonth && 
@@ -95,25 +93,22 @@ const categoryColors = {
     
       const calculateTotals = (monthRecords) => {
         const totals = {};
-        let incomeAmount = 0;  // 收入類別的總金額
-        let expenseAmount = 0; // 其他類別的總金額
+        let incomeAmount = 0;
+        let expenseAmount = 0;
         
         monthRecords.forEach(record => {
           if (!record || !record.category) return;
           
-          // 將英文類別轉換為中文
           const chineseCategory = categoryMap[record.category] || record.category;
           const amount = Number(record.amount) || 0;
           
           if (amount > 0) {
-            // 更新類別總額
             if (totals[chineseCategory]) {
               totals[chineseCategory] += amount;
             } else {
               totals[chineseCategory] = amount;
             }
       
-            // 分別計算收入和支出
             if (record.category === 'keep' || chineseCategory === '收入') {
               incomeAmount += amount;
             } else {
@@ -166,14 +161,15 @@ const categoryColors = {
       name: category,
       population: amount,
       color: categoryColors[category],
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 12
+      legendFontColor: '#101010',
+      legendFontSize: 12,
     }));
   
     const chartConfig = {
       backgroundGradientFrom: '#ffffff',
       backgroundGradientTo: '#ffffff',
       color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+      decimalPlaces: 2,
     };
   
     const handleNewRecord = () => {
@@ -183,7 +179,10 @@ const categoryColors = {
     const handleAccounting = () => {
       navigation.navigate('Accounting');
     };
+
+    const radius = 50;
     
+    const totalAmount = Object.values(categoryTotals).reduce((sum, amount) => sum + amount, 0);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -216,12 +215,11 @@ const categoryColors = {
       </View>
 
       <View style={styles.chartSection}>
-      <Text style={styles.totalAmount}>
-        {income > 0 ? `+${income.toLocaleString()}` : income.toLocaleString()}
-      </Text>
       <View style={styles.chartContainer}>
         {chartData.length > 0 ? (
-          <PieChart
+        <>
+           <PieChart
+            key={JSON.stringify(chartData)} // Add this key prop
             data={chartData}
             width={windowWidth}
             height={220}
@@ -231,13 +229,19 @@ const categoryColors = {
             paddingLeft="0"
             center={[windowWidth / 4, 0]}
             absolute
-          />
+            showValues={false}
+        />
+            <View style={[styles.centerCircle, { width: radius * 2, height: radius * 2, borderRadius: radius }]}>
+              <Text style={styles.centerText}>
+                {totalIncome > 0 ? `+${totalIncome.toLocaleString()}` : totalIncome.toLocaleString()}
+              </Text>
+            </View>
+          </>
         ) : (
           <Text style={styles.noDataText}>本月還沒有支出記錄</Text>
         )}
       </View>
     </View>
-
       <ScrollView style={styles.categoryListContainer}>
         <View style={styles.categoryList}>
           {getSortedCategories(categoryTotals)
@@ -496,5 +500,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 8,
     fontSize: 12,
+  },
+  centerCircle: {
+    backgroundColor: 'white',
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#40916C',
+    textAlign: 'center',
   },
 });
