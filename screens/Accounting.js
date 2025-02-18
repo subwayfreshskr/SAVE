@@ -13,6 +13,7 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -20,6 +21,24 @@ export default function Accounting({ navigation }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [records, setRecords] = useState([{ items: [] }]);
   const [displayRecords, setDisplayRecords] = useState([]);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  const handleConfirm = (date) => {
+    const today = new Date();
+    if (date > today) {
+      date = today;
+    }
+    setCurrentDate(date);
+    hideDatePicker();
+  };
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
@@ -27,21 +46,38 @@ export default function Accounting({ navigation }) {
 
   const updateDisplayRecords = () => {
     const formattedCurrentDate = formatDate(currentDate);
-    // 確保 records[0].items 存在且是陣列
     const allRecords = records[0]?.items || [];
     
-    // 使用嚴格比對來過濾記錄
     const currentDateRecords = allRecords.filter(record => {
-      // 確保 record.date 存在
-      if (!record || !record.date) return false;
-      
-      // 轉換並比對日期
-      const recordDate = formatDate(new Date(record.date));
-      return recordDate === formattedCurrentDate;
+        if (!record || !record.date) return false;
+        return record.date === formattedCurrentDate;
     });
     
     setDisplayRecords(currentDateRecords);
-  };
+};
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+        const params = navigation.getState().routes.find(
+            route => route.name === 'Accounting'
+        )?.params;
+
+        if (params?.selectedDate) {
+            // 確保使用正確的日期格式
+            const newDate = new Date(params.selectedDate);
+            if (!isNaN(newDate.getTime())) {
+                setCurrentDate(newDate);
+            }
+        }
+        
+        // 重新加載記錄
+        if (params?.refresh) {
+            loadRecords();
+        }
+    });
+
+    return unsubscribe;
+}, [navigation]);
 
   useEffect(() => {
     loadRecords();
@@ -233,7 +269,9 @@ export default function Accounting({ navigation }) {
               style={styles.dateButtonIcon}
             />
           </TouchableOpacity>
-          <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
+          <TouchableOpacity onPress={showDatePicker}>
+            <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             onPress={handleNextDate}
             disabled={isToday(currentDate)}
@@ -248,6 +286,16 @@ export default function Accounting({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* 添加 DatePicker Modal */}
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          date={currentDate}
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+          maximumDate={new Date()}
+        />
+        
         <View style={styles.content}>
           <FlatList
             data={displayRecords}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {
   Alert,
   StyleSheet,
@@ -203,6 +204,7 @@ const CustomKeyboard = ({ value, onChange, onSave, onDelete, editMode }) => {
 };
 
 export default function NewRecord({ navigation, route }) {
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('food');
@@ -244,59 +246,72 @@ export default function NewRecord({ navigation, route }) {
     });
   };
 
-  const handleSave = async () => {
-    const cleanAmount = amount.replace('$', '').trim();
-    
-    const parsedAmount = parseFloat(cleanAmount);
-    if (!cleanAmount || isNaN(parsedAmount)) {
+  // 在 NewRecord.js 中
+const handleSave = async () => {
+  const cleanAmount = amount.replace('$', '').trim();
+  
+  const parsedAmount = parseFloat(cleanAmount);
+  if (!cleanAmount || isNaN(parsedAmount)) {
       alert('請輸入有效金額！');
       return;
-    }
-    
-    if (!description) {
+  }
+  
+  if (!description) {
       alert('請輸入註解！');
       return;
-    }
-    
-    if (!selectedCategory) {
+  }
+  
+  if (!selectedCategory) {
       alert('請選擇類別！');
       return;
-    }
+  }
+
+  const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory);
   
-    const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory);
-    
-    const record = {
+  // 確保使用 currentDate 作為記錄的日期
+  const selectedDate = formatDate(currentDate);
+  
+  const record = {
       id: editMode ? recordData.id : Date.now().toString(),
       name: description,
       amount: parsedAmount,
       category: selectedCategory,
-      date: formatDate(currentDate),
+      date: selectedDate, // 使用格式化後的選擇日期
       selectedIcon: categoryInfo?.selectedIcon,
       categoryColor: categoryInfo?.color,
-    };
-  
-    if (!record.amount || !record.selectedIcon) {
-      alert('記錄資料不完整，請重試！');
-      return;
-    }
-  
-    if (editMode) {
-      if (route.params?.onSaveEdit) {
-        await route.params.onSaveEdit(record);
-      }
-    } else {
-      if (route.params?.onAddRecord) {
-        await route.params.onAddRecord(record);
-      }
-    }
-  
-    setAmount('');
-    setDescription('');
-    setSelectedCategory('food');
-  
-    navigation.goBack();
   };
 
+  if (!record.amount || !record.selectedIcon) {
+      alert('記錄資料不完整，請重試！');
+      return;
+  }
+
+  try {
+      if (editMode) {
+          if (route.params?.onSaveEdit) {
+              await route.params.onSaveEdit(record);
+          }
+      } else {
+          if (route.params?.onAddRecord) {
+              await route.params.onAddRecord(record);
+          }
+      }
+
+      setAmount('');
+      setDescription('');
+      setSelectedCategory('food');
+
+      // 確保使用選擇的日期返回 Accounting
+      navigation.navigate('Accounting', {
+          selectedDate: selectedDate,
+          refresh: true
+      });
+  } catch (error) {
+      console.error('Error saving record:', error);
+      alert('儲存記錄時發生錯誤');
+  }
+};
+  
   const handleDelete = async () => {
     if (editMode && recordData && route.params?.onDeleteRecord) {
       Alert.alert(
@@ -320,6 +335,28 @@ export default function NewRecord({ navigation, route }) {
     }
   };
 
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
+};
+
+const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+};
+
+const handleConfirm = (date) => {
+    const today = new Date();
+    if (date > today) {
+        date = today;
+    }
+    setCurrentDate(date);
+    hideDatePicker();
+};
+
+const isToday = (date) => {
+  const today = new Date();
+  return formatDate(date) === formatDate(today);
+};
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -331,22 +368,38 @@ export default function NewRecord({ navigation, route }) {
           />
         </View>
 
-        {/* 日期導航 */}
-        <View style={styles.dateNav}>
-          <TouchableOpacity onPress={handlePrevDate}>
-            <Image
-              source={require('../assets/Vector-1.png')}
-              style={styles.dateButtonIcon}
-            />
-          </TouchableOpacity>
-          <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
-          <TouchableOpacity onPress={handleNextDate}>
-            <Image
-              source={require('../assets/Vector.png')}
-              style={styles.dateButtonIcon}
-            />
-          </TouchableOpacity>
+       {/* 日期導航 */}
+       <View style={styles.dateNav}>
+            <TouchableOpacity onPress={handlePrevDate}>
+                <Image
+                    source={require('../assets/Vector-1.png')}
+                    style={styles.dateButtonIcon}
+                />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={showDatePicker}>
+                <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+                onPress={handleNextDate}
+                disabled={isToday(currentDate)}
+            >
+                <Image
+                    source={require('../assets/Vector.png')}
+                    style={[
+                        styles.dateButtonIcon,
+                        isToday(currentDate) && styles.disabledButton
+                    ]}
+                />
+            </TouchableOpacity>
         </View>
+        <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="date"
+            date={currentDate}
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+            maximumDate={new Date()} // 限制最大日期為今天
+        />
 
         {/* 返回按鈕 */}
         <TouchableOpacity 
@@ -543,6 +596,9 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 20,
   },
+  disabledButton: {
+    opacity: 0.3,
+},
   backButton: {
     position: 'absolute',
     top: 60,
