@@ -26,12 +26,13 @@ export default function Accounting({ navigation }) {
   const showDatePicker = () => {
     setDatePickerVisibility(true);
   };
-
+  
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
-
+  
   const handleConfirm = (date) => {
+    console.log('Selected date:', date);
     const today = new Date();
     if (date > today) {
       date = today;
@@ -41,7 +42,11 @@ export default function Accounting({ navigation }) {
   };
 
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const updateDisplayRecords = () => {
@@ -56,27 +61,26 @@ export default function Accounting({ navigation }) {
     setDisplayRecords(currentDateRecords);
 };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-        const params = navigation.getState().routes.find(
-            route => route.name === 'Accounting'
-        )?.params;
+useEffect(() => {
+  const unsubscribe = navigation.addListener('focus', () => {
+    const params = navigation.getState().routes.find(
+      route => route.name === 'Accounting'
+    )?.params;
 
-        if (params?.selectedDate) {
-            // 確保使用正確的日期格式
-            const newDate = new Date(params.selectedDate);
-            if (!isNaN(newDate.getTime())) {
-                setCurrentDate(newDate);
-            }
-        }
-        
-        // 重新加載記錄
+    if (params?.selectedDate) {
+      // 將字符串日期轉換為 Date 對象
+      const newDate = new Date(params.selectedDate.replace(/-/g, '/'));
+      if (!isNaN(newDate.getTime())) {
+        setCurrentDate(newDate);
+        // 如果有 refresh 參數，重新加載記錄
         if (params?.refresh) {
-            loadRecords();
+          loadRecords();
         }
-    });
+      }
+    }
+  });
 
-    return unsubscribe;
+  return unsubscribe;
 }, [navigation]);
 
   useEffect(() => {
@@ -127,7 +131,6 @@ export default function Accounting({ navigation }) {
   };
 
   const handleEditRecord = async (editedRecord) => {
-    // 確保編輯的記錄保留原始日期
     const updatedRecords = [{
       items: records[0].items.map(record => 
         record.id === editedRecord.id 
@@ -138,6 +141,11 @@ export default function Accounting({ navigation }) {
     
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
+    
+    navigation.setParams({
+      refresh: true,
+      selectedDate: formatDate(currentDate)
+    });
   };
 
   const handleDeleteRecord = async (recordId) => {
@@ -189,7 +197,6 @@ export default function Accounting({ navigation }) {
     let newDate = new Date(prevDate);
     newDate.setDate(newDate.getDate() + 1);
     
-    // 確保不會超過今天
     const today = new Date();
     if (newDate > today) {
       return today;
@@ -198,11 +205,12 @@ export default function Accounting({ navigation }) {
   });
 };
 
-  const handleNewRecord = () => {
-    navigation.navigate('NewRecord', {
-      onAddRecord: handleAddRecord
-    });
-  };
+const handleNewRecord = () => {
+  navigation.navigate('NewRecord', {
+    onAddRecord: handleAddRecord,
+    selectedDate: formatDate(currentDate)
+  });
+};
 
   const handleAnalysis = () => {
     navigation.navigate('Analysis');
@@ -269,9 +277,11 @@ export default function Accounting({ navigation }) {
               style={styles.dateButtonIcon}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={showDatePicker}>
+          <TouchableOpacity 
+            onPress={showDatePicker}
+          >
             <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
-          </TouchableOpacity>
+</TouchableOpacity>
           <TouchableOpacity 
             onPress={handleNextDate}
             disabled={isToday(currentDate)}
@@ -286,7 +296,6 @@ export default function Accounting({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* 添加 DatePicker Modal */}
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
           mode="date"
@@ -294,6 +303,13 @@ export default function Accounting({ navigation }) {
           onConfirm={handleConfirm}
           onCancel={hideDatePicker}
           maximumDate={new Date()}
+          // 添加以下樣式配置
+          themeVariant="light"
+          accentColor="#40916C"  // 使用主題綠色
+          textColor="#000000"
+          isDarkModeEnabled={false}
+          cancelTextIOS="取消"
+          confirmTextIOS="確定"
         />
         
         <View style={styles.content}>

@@ -208,18 +208,26 @@ export default function NewRecord({ navigation, route }) {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('food');
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [showKeyboard, setShowKeyboard] = useState(false);
   const editMode = route.params?.editMode || false;
   const recordData = route.params?.recordData;
-
-  const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
+  const getInitialDate = () => {
+    const selectedDate = route.params?.selectedDate;
+    if (!selectedDate) return new Date();
+    
+    const parsedDate = new Date(selectedDate);
+    return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
   };
 
-  useEffect(() => {
-    setCurrentDate(new Date());
-  }, []);
+  const [currentDate, setCurrentDate] = useState(getInitialDate());
+
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     if (editMode && recordData) {
@@ -268,17 +276,16 @@ const handleSave = async () => {
 
   const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory);
   
-  // 確保使用 currentDate 作為記錄的日期
   const selectedDate = formatDate(currentDate);
   
   const record = {
-      id: editMode ? recordData.id : Date.now().toString(),
-      name: description,
-      amount: parsedAmount,
-      category: selectedCategory,
-      date: selectedDate, // 使用格式化後的選擇日期
-      selectedIcon: categoryInfo?.selectedIcon,
-      categoryColor: categoryInfo?.color,
+    id: editMode ? recordData.id : Date.now().toString(),
+    name: description,
+    amount: parsedAmount,
+    category: selectedCategory,
+    date: formatDate(currentDate), // 使用 formatDate
+    selectedIcon: categoryInfo?.selectedIcon,
+    categoryColor: categoryInfo?.color,
   };
 
   if (!record.amount || !record.selectedIcon) {
@@ -287,26 +294,27 @@ const handleSave = async () => {
   }
 
   try {
-      if (editMode) {
-          if (route.params?.onSaveEdit) {
-              await route.params.onSaveEdit(record);
-          }
-      } else {
-          if (route.params?.onAddRecord) {
-              await route.params.onAddRecord(record);
-          }
+    if (editMode) {
+      if (route.params?.onSaveEdit) {
+        await route.params.onSaveEdit(record);
       }
+    } else {
+      if (route.params?.onAddRecord) {
+        await route.params.onAddRecord(record);
+      }
+    }
 
-      setAmount('');
-      setDescription('');
-      setSelectedCategory('food');
+    setAmount('');
+    setDescription('');
+    setSelectedCategory('food');
 
-      // 確保使用選擇的日期返回 Accounting
+      route.params.onAddRecord(record);
+  
       navigation.navigate('Accounting', {
-          selectedDate: selectedDate,
-          refresh: true
+        refresh: true,
+        selectedDate: formatDate(currentDate)
       });
-  } catch (error) {
+    } catch (error) {
       console.error('Error saving record:', error);
       alert('儲存記錄時發生錯誤');
   }
@@ -344,12 +352,13 @@ const hideDatePicker = () => {
 };
 
 const handleConfirm = (date) => {
-    const today = new Date();
-    if (date > today) {
-        date = today;
-    }
-    setCurrentDate(date);
-    hideDatePicker();
+  if (!date) return;
+  const today = new Date();
+  if (date > today) {
+    date = today;
+  }
+  setCurrentDate(date);
+  hideDatePicker();
 };
 
 const isToday = (date) => {
