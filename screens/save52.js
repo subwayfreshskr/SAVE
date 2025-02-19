@@ -235,13 +235,16 @@ export default function Save52({ navigation }) {
 
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
-            <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
-              <Image 
-                source={require('../assets/account.png')}
-                style={styles.menuIcon}
-              />
-              <Text style={styles.iconText}>記帳</Text>
-            </TouchableOpacity>
+            <TouchableOpacity
+                          style={styles.iconWrapper}
+                          onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save52' })}
+                        >
+                          <Image
+                            source={require('../assets/account.png')}
+                            style={styles.menuIcon}
+                          />
+                          <Text style={styles.iconText}>記帳</Text>
+                        </TouchableOpacity>
             <TouchableOpacity style={styles.iconWrapper}>
               <Image 
                 source={require('../assets/home.png')}

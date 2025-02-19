@@ -211,12 +211,17 @@ export default function NewRecord({ navigation, route }) {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const editMode = route.params?.editMode || false;
   const recordData = route.params?.recordData;
+  const [initialDate, setInitialDate] = useState('');
+
   const getInitialDate = () => {
-    const selectedDate = route.params?.selectedDate;
-    if (!selectedDate) return new Date();
-    
-    const parsedDate = new Date(selectedDate);
-    return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+    if (editMode && recordData) {
+      return new Date(recordData.date);
+    }
+    if (route.params?.selectedDate) {
+      const parsedDate = new Date(route.params.selectedDate);
+      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+    }
+    return new Date();
   };
 
   const [currentDate, setCurrentDate] = useState(getInitialDate());
@@ -230,11 +235,26 @@ export default function NewRecord({ navigation, route }) {
   };
 
   useEffect(() => {
+    // 如果是編輯模式，使用記錄的日期
+    if (editMode && recordData) {
+      setInitialDate(recordData.date);
+    } 
+    // 否則使用路由參數的日期
+    else if (route.params?.selectedDate) {
+      setInitialDate(route.params.selectedDate);
+    }
+    // 如果都沒有，使用今天的日期
+    else {
+      setInitialDate(formatDate(new Date()));
+    }
+  }, []);
+
+  useEffect(() => {
     if (editMode && recordData) {
       setAmount(`$${recordData.amount}`);
       setDescription(recordData.name);
       setSelectedCategory(recordData.category);
-      setCurrentDate(new Date(recordData.date));
+      setInitialDate(recordData.date);
     }
   }, [editMode, recordData]);
 
@@ -254,72 +274,63 @@ export default function NewRecord({ navigation, route }) {
     });
   };
 
-  // 在 NewRecord.js 中
-const handleSave = async () => {
-  const cleanAmount = amount.replace('$', '').trim();
-  
-  const parsedAmount = parseFloat(cleanAmount);
-  if (!cleanAmount || isNaN(parsedAmount)) {
+  const handleSave = async () => {
+    const cleanAmount = amount.replace('$', '').trim();
+    
+    const parsedAmount = parseFloat(cleanAmount);
+    if (!cleanAmount || isNaN(parsedAmount)) {
       alert('請輸入有效金額！');
       return;
-  }
-  
-  if (!description) {
+    }
+    
+    if (!description) {
       alert('請輸入註解！');
       return;
-  }
-  
-  if (!selectedCategory) {
+    }
+    
+    if (!selectedCategory) {
       alert('請選擇類別！');
       return;
-  }
-
-  const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory);
-  
-  const selectedDate = formatDate(currentDate);
-  
-  const record = {
-    id: editMode ? recordData.id : Date.now().toString(),
-    name: description,
-    amount: parsedAmount,
-    category: selectedCategory,
-    date: formatDate(currentDate), // 使用 formatDate
-    selectedIcon: categoryInfo?.selectedIcon,
-    categoryColor: categoryInfo?.color,
-  };
-
-  if (!record.amount || !record.selectedIcon) {
-      alert('記錄資料不完整，請重試！');
-      return;
-  }
-
-  try {
-    if (editMode) {
-      if (route.params?.onSaveEdit) {
-        await route.params.onSaveEdit(record);
-      }
-    } else {
-      if (route.params?.onAddRecord) {
-        await route.params.onAddRecord(record);
-      }
     }
-
-    setAmount('');
-    setDescription('');
-    setSelectedCategory('food');
-
-      route.params.onAddRecord(record);
+  
+    const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory);
+    const selectedDate = formatDate(currentDate);
+    
+    const record = {
+      id: editMode ? recordData.id : Date.now().toString(),
+      name: description,
+      amount: parsedAmount,
+      category: selectedCategory,
+      date: selectedDate,
+      selectedIcon: categoryInfo?.selectedIcon,
+      categoryColor: categoryInfo?.color,
+    };
+  
+    try {
+      if (editMode) {
+        if (route.params?.onSaveEdit) {
+          await route.params.onSaveEdit(record);
+        }
+      } else {
+        if (route.params?.onAddRecord) {
+          await route.params.onAddRecord(record);
+        }
+      }
+  
+      setAmount('');
+      setDescription('');
+      setSelectedCategory('food');
   
       navigation.navigate('Accounting', {
         refresh: true,
-        selectedDate: formatDate(currentDate)
+        selectedDate: selectedDate
       });
     } catch (error) {
       console.error('Error saving record:', error);
       alert('儲存記錄時發生錯誤');
-  }
-};
-  
+    }
+  };
+
   const handleDelete = async () => {
     if (editMode && recordData && route.params?.onDeleteRecord) {
       Alert.alert(
@@ -495,12 +506,13 @@ const isToday = (date) => {
         </View>
 
         <CustomKeyboard 
-          value={amount} 
-          onChange={setAmount} 
-          onSave={handleSave}
-          onDelete={handleDelete}
-          editMode={editMode}
-        />
+      value={amount} 
+      onChange={setAmount} 
+      onSave={handleSave}
+      onDelete={handleDelete}
+      editMode={editMode}
+      currentDate={currentDate}
+    />
 
         {/* Bottom Navigation */}
         <View style={styles.menuContainer}>

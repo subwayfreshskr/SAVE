@@ -22,6 +22,92 @@ export default function Accounting({ navigation }) {
   const [records, setRecords] = useState([{ items: [] }]);
   const [displayRecords, setDisplayRecords] = useState([]);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [sourceScreen, setSourceScreen] = useState(null);
+
+  const handleHomePress = () => {
+    switch (sourceScreen) {
+      case 'save365':
+        navigation.navigate('save365');
+        break;
+      case 'save52':
+        navigation.navigate('save52');
+        break;
+      case 'savecos':
+        navigation.navigate('savecos');
+        break;
+    }
+  };
+
+  useEffect(() => {
+    let unsubscribeFocus = null;
+
+    const loadInitialData = async () => {
+      let initialDate = new Date();
+
+      const params = navigation.getState().routes.find(
+        route => route.name === 'Accounting'
+      )?.params;
+
+      // 保存來源頁面信息
+      if (params?.sourceScreen) {
+        setSourceScreen(params.sourceScreen);
+      }
+
+      if (params?.selectedDate) {
+        try {
+          const dateStr = params.selectedDate.replace(/-/g, '/');
+          const newDate = new Date(dateStr);
+          if (!isNaN(newDate.getTime())) {
+            initialDate = newDate;
+          }
+        } catch (error) {
+          console.error('Error parsing date:', error);
+        }
+      }
+
+      setCurrentDate(initialDate);
+
+      try {
+        const savedRecords = await AsyncStorage.getItem('accountingRecords');
+        if (savedRecords !== null) {
+          const parsedRecords = JSON.parse(savedRecords);
+          setRecords(parsedRecords);
+        }
+      } catch (error) {
+        console.error('Error loading records:', error);
+      }
+    };
+
+    loadInitialData();
+    loadRecords();
+
+    unsubscribeFocus = navigation.addListener('focus', () => {
+      loadInitialData();
+    });
+
+    return () => {
+      if (unsubscribeFocus) {
+        unsubscribeFocus();
+      }
+    };
+  }, [navigation]);
+
+  useEffect(() => {
+    updateDisplayRecords();
+  }, [currentDate, records]);
+
+
+  const loadRecords = async () => {
+    try {
+      const savedRecords = await AsyncStorage.getItem('accountingRecords');
+      if (savedRecords !== null) {
+        const parsedRecords = JSON.parse(savedRecords);
+        setRecords(parsedRecords);
+      }
+    } catch (error) {
+      console.error('Error loading records:', error);
+    }
+  };
 
   const showDatePicker = () => {
     setDatePickerVisibility(true);
@@ -61,52 +147,6 @@ export default function Accounting({ navigation }) {
     setDisplayRecords(currentDateRecords);
 };
 
-useEffect(() => {
-  const unsubscribe = navigation.addListener('focus', () => {
-    const params = navigation.getState().routes.find(
-      route => route.name === 'Accounting'
-    )?.params;
-
-    if (params?.selectedDate) {
-      // 將字符串日期轉換為 Date 對象
-      const newDate = new Date(params.selectedDate.replace(/-/g, '/'));
-      if (!isNaN(newDate.getTime())) {
-        setCurrentDate(newDate);
-        // 如果有 refresh 參數，重新加載記錄
-        if (params?.refresh) {
-          loadRecords();
-        }
-      }
-    }
-  });
-
-  return unsubscribe;
-}, [navigation]);
-
-  useEffect(() => {
-    loadRecords();
-  }, []);
-
-  useEffect(() => {
-    updateDisplayRecords();
-  }, [currentDate, records]);
-
-  useEffect(() => {
-    setCurrentDate(new Date());
-  }, []);
-
-  const loadRecords = async () => {
-    try {
-      const savedRecords = await AsyncStorage.getItem('accountingRecords');
-      if (savedRecords !== null) {
-        const parsedRecords = JSON.parse(savedRecords);
-        setRecords(parsedRecords);
-      }
-    } catch (error) {
-      console.error('Error loading records:', error);
-    }
-  };
-
   const saveRecords = async (newRecords) => {
     try {
       await AsyncStorage.setItem('accountingRecords', JSON.stringify(newRecords));
@@ -116,10 +156,9 @@ useEffect(() => {
   };
 
   const handleAddRecord = async (newRecord) => {
-    // 確保新記錄包含正確的日期
     const recordToAdd = {
       ...newRecord,
-      date: formatDate(currentDate) // 使用當前選擇的日期
+      date: newRecord.date
     };
   
     const updatedRecords = [{
@@ -128,6 +167,8 @@ useEffect(() => {
     
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
+    
+    setCurrentDate(new Date(newRecord.date));
   };
 
   const handleEditRecord = async (editedRecord) => {
@@ -168,12 +209,6 @@ useEffect(() => {
     }
   };
 
-  useEffect(() => {
-    navigation.setParams({
-      resetAllRecords: resetAllRecords
-    });
-  }, [navigation]);
-
   const isToday = (date) => {
     const today = new Date();
     return formatDate(date) === formatDate(today);
@@ -206,9 +241,10 @@ useEffect(() => {
 };
 
 const handleNewRecord = () => {
+  const formattedDate = formatDate(currentDate);
   navigation.navigate('NewRecord', {
     onAddRecord: handleAddRecord,
-    selectedDate: formatDate(currentDate)
+    selectedDate: formattedDate
   });
 };
 
@@ -230,6 +266,7 @@ const handleNewRecord = () => {
       });
     };
     
+
     return (
       <View style={styles.recordItem}>
         <View style={styles.recordLeft}>
@@ -305,7 +342,7 @@ const handleNewRecord = () => {
           maximumDate={new Date()}
           // 添加以下樣式配置
           themeVariant="light"
-          accentColor="#40916C"  // 使用主題綠色
+          accentColor="#40916C"
           textColor="#000000"
           isDarkModeEnabled={false}
           cancelTextIOS="取消"
@@ -359,13 +396,17 @@ const handleNewRecord = () => {
               />
               <Text style={styles.iconText}>記帳</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconWrapper}>
+            <TouchableOpacity 
+              style={styles.iconWrapper}
+              onPress={handleHomePress}
+            >
               <Image
                 source={require('../assets/home-line.png')}
                 style={styles.menuIcon}
               />
               <Text style={styles.iconText}>主頁</Text>
             </TouchableOpacity>
+
             <TouchableOpacity 
               style={styles.iconWrapper} 
               onPress={() => navigation.navigate('Setting')}

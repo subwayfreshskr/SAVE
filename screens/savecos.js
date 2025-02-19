@@ -19,7 +19,7 @@ import { PieChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
 const pieChartWidth = screenWidth * 0.85;
-// 左右欄位組件
+
 const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
   const [leftBoxFocused, setLeftBoxFocused] = useState(false);
   const [rightBoxFocused, setRightBoxFocused] = useState(false);
@@ -242,14 +242,23 @@ export default function Savecos({ navigation }) {
         {/* 底部導航欄 */}
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
-            <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
-              <Image source={require('../assets/account.png')} style={styles.menuIcon} />
-              <Text style={styles.iconText}>記帳</Text>
+            <TouchableOpacity
+            style={styles.iconWrapper}
+            onPress={() => navigation.navigate('Accounting', { sourceScreen: 'savecos' })}
+            >
+            <Image
+            source={require('../assets/account.png')}
+            style={styles.menuIcon}
+            />
+            <Text style={styles.iconText}>記帳</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconWrapper}onPress={() => navigation.navigate('Accounting')}>
-              <Image source={require('../assets/home.png')} style={styles.menuIcon} />
-              <Text style={styles.iconText}>主頁</Text>
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconWrapper}>
+                          <Image 
+                            source={require('../assets/home.png')}
+                            style={styles.menuIcon}
+                          />
+                          <Text style={styles.iconText}>主頁</Text>
+                        </TouchableOpacity>
             <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('Setting')}>
                   <Image 
                     source={require('../assets/setting.png')}
