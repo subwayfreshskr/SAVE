@@ -3,15 +3,11 @@ import {
   StyleSheet,
   View,
   Text,
-  TextInput,
+  Modal,
   TouchableOpacity,
   Image,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ScrollView,
-  Animated,
-  Alert,
   Dimensions,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,16 +15,38 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const windowWidth = Dimensions.get('window').width;
 
 export default function Save365({ navigation }) {
+  // 原有的 state
   const [selectedCircles, setSelectedCircles] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
   const [slideAnim] = useState(new Animated.Value(0));
   const [history, setHistory] = useState([]); 
   const [fadeAnim] = useState(new Animated.Value(1));
   
+  // 新增完成時的彈窗 state
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [scaleAnim] = useState(new Animated.Value(0.5));
+  
+  // 計算總金額
+  const totalAmount = 66795; // (1+365)*365/2
+
   // 加載保存的數據
   useEffect(() => {
     loadSavedData();
   }, []);
+
+  useEffect(() => {
+    // 檢查是否已完成所有 365 個圓圈
+    if (history.length === 365 && !showCompletionModal) {
+      setShowCompletionModal(true);
+      // 當彈窗顯示時執行動畫
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [history]);
 
   // 從 AsyncStorage 加載數據
   const loadSavedData = async () => {
@@ -37,7 +55,13 @@ export default function Save365({ navigation }) {
       const savedCircles = await AsyncStorage.getItem('selectedCircles');
       
       if (savedHistory) {
-        setHistory(JSON.parse(savedHistory));
+        const parsedHistory = JSON.parse(savedHistory);
+        setHistory(parsedHistory);
+        
+        // 檢查是否已完成所有 365 個圓圈
+        if (parsedHistory.length === 365) {
+          setShowCompletionModal(true);
+        }
       }
       if (savedCircles) {
         setSelectedCircles(JSON.parse(savedCircles));
@@ -46,7 +70,7 @@ export default function Save365({ navigation }) {
       console.error('Error loading saved data:', error);
     }
   };
-
+  
   // 保存數據到 AsyncStorage
   const saveData = async (newHistory, newSelectedCircles) => {
     try {
@@ -57,6 +81,7 @@ export default function Save365({ navigation }) {
     }
   };
   
+  // 處理圓圈選擇
   const handleCirclePress = (number) => {
     const currentDate = new Date().toLocaleDateString();
 
@@ -68,15 +93,43 @@ export default function Save365({ navigation }) {
     setSelectedCircles(newSelectedCircles);
 
     // 更新歷史記錄
-    const newHistory = selectedCircles[number]
-      ? history.filter(item => item.number !== number)
-      : [...history, { number, date: currentDate }];
+    let newHistory;
+    if (selectedCircles[number]) {
+      newHistory = history.filter(item => item.number !== number);
+    } else {
+      newHistory = [...history, { number, date: currentDate }];
+    }
+    
     setHistory(newHistory);
 
     // 保存到 AsyncStorage
     saveData(newHistory, newSelectedCircles);
   };
+  
+  const resetAllCircles = async () => {
+    // 重置所有選中的圓圈
+    setSelectedCircles({});
+    // 清空歷史記錄
+    setHistory([]);
+    // 回到第一頁
+    setCurrentPage(0);
+    
+    // 保存清空的數據到 AsyncStorage
+    await saveData([], {});
+    
+    // 關閉彈窗
+    closeModal();
+  };
 
+  const closeModal = () => {
+    // 關閉彈窗時執行縮小動畫
+    Animated.timing(scaleAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setShowCompletionModal(false));
+  };
+  
   const handlePageChange = (direction) => {
     if ((direction === 'next' && currentPage >= pages.length - 1) || 
         (direction === 'prev' && currentPage <= 0)) {
@@ -202,23 +255,23 @@ export default function Save365({ navigation }) {
       {/* 底部導航欄 */}
       <View style={styles.menuContainer}>
         <View style={styles.iconContainer}>
-        <TouchableOpacity
-              style={styles.iconWrapper}
-              onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save365' })}
-            >
-              <Image
-                source={require('../assets/account.png')}
-                style={styles.menuIcon}
-              />
-              <Text style={styles.iconText}>記帳</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconWrapper}
+            onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save365' })}
+          >
+            <Image
+              source={require('../assets/account.png')}
+              style={styles.menuIcon}
+            />
+            <Text style={styles.iconText}>記帳</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper}>
-          <Image 
-           source={require('../assets/home.png')}
-           style={styles.menuIcon}
-           />
+            <Image 
+              source={require('../assets/home.png')}
+              style={styles.menuIcon}
+            />
             <Text style={styles.iconText}>主頁</Text>
-            </TouchableOpacity>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.iconWrapper} 
             onPress={() => navigation.navigate('Setting')}
@@ -231,6 +284,49 @@ export default function Save365({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+      
+      {/* 完成後的彈窗 */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showCompletionModal}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ scale: scaleAnim }],
+              }
+            ]}
+          >
+            <Image
+              source={require('../assets/52周.png')}
+              style={styles.congratsImage}
+            />
+            <Text style={styles.congratsTitle}>恭喜你完成了 365 天儲蓄挑戰!</Text>
+            <Text style={styles.congratsText}>
+              你已經成功存了總共 <Text style={styles.amountText}>${totalAmount.toLocaleString()}</Text> 元
+            </Text>            
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetAllCircles}
+              >
+                <Text style={styles.buttonText}>重新開始挑戰</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeModal}
+              >
+                <Text style={styles.buttonText}>繼續</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -319,6 +415,59 @@ const styles = StyleSheet.create({
   checkButtonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  congratsImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+  },
+  congratsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#EA4335',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  congratsText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  amountText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#EA4335',
+  },
+  closeButton: {
+    backgroundColor: '#EA4335',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   menuContainer: {
     width: 402,
