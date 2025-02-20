@@ -25,38 +25,34 @@ export default function Accounting({ navigation }) {
   const [sourceScreen, setSourceScreen] = useState(null);
 
   const handleHomePress = () => {
-    switch (sourceScreen) {
-      case 'save365':
-        navigation.navigate('save365');
-        break;
-      case 'save52':
-        navigation.navigate('save52');
-        break;
-      case 'savecos':
-        navigation.navigate('savecos');
-        break;
+    if (sourceScreen) {
+      navigation.navigate(sourceScreen);
+    } else {
+      // 如果沒有 sourceScreen，可能顯示錯誤訊息或導航到預設頁面
+      Alert.alert('錯誤', '無法找到主頁面');
     }
   };
 
   useEffect(() => {
     let unsubscribeFocus = null;
-
+  
     const loadInitialData = async () => {
       let initialDate = new Date();
-
+  
       const params = navigation.getState().routes.find(
         route => route.name === 'Accounting'
       )?.params;
-
+  
       // 保存來源頁面信息
       if (params?.sourceScreen) {
         setSourceScreen(params.sourceScreen);
       }
-
+  
+      // 處理日期參數
       if (params?.selectedDate) {
         try {
-          const dateStr = params.selectedDate.replace(/-/g, '/');
-          const newDate = new Date(dateStr);
+          // 確保日期格式正確解析
+          const newDate = new Date(params.selectedDate);
           if (!isNaN(newDate.getTime())) {
             initialDate = newDate;
           }
@@ -64,38 +60,65 @@ export default function Accounting({ navigation }) {
           console.error('Error parsing date:', error);
         }
       }
-
+  
+      // 設置當前日期
       setCurrentDate(initialDate);
-
+  
+      // 載入記錄
       try {
         const savedRecords = await AsyncStorage.getItem('accountingRecords');
         if (savedRecords !== null) {
           const parsedRecords = JSON.parse(savedRecords);
           setRecords(parsedRecords);
+          // 設置後立即更新顯示記錄
+          updateDisplayRecords(initialDate, parsedRecords);
         }
       } catch (error) {
         console.error('Error loading records:', error);
       }
     };
-
+  
+    // 初始載入
     loadInitialData();
-    loadRecords();
-
+  
+    // 監聽頁面聚焦事件
     unsubscribeFocus = navigation.addListener('focus', () => {
+      // 重新載入數據，確保日期同步
       loadInitialData();
     });
-
+  
     return () => {
       if (unsubscribeFocus) {
         unsubscribeFocus();
       }
     };
   }, [navigation]);
-
+  
+  // 新增一個更新顯示記錄的函數，接受日期和記錄作為參數
+  const updateDisplayRecords = (date, recordsData) => {
+    const formattedDate = formatDate(date);
+    const allRecords = recordsData?.[0]?.items || [];
+    
+    const filteredRecords = allRecords.filter(record => {
+      if (!record || !record.date) return false;
+      return record.date === formattedDate;
+    });
+    
+    setDisplayRecords(filteredRecords);
+  };
+  
+  // 修改現有的updateDisplayRecords函數
   useEffect(() => {
-    updateDisplayRecords();
+    const formattedCurrentDate = formatDate(currentDate);
+    const allRecords = records[0]?.items || [];
+    
+    const currentDateRecords = allRecords.filter(record => {
+      if (!record || !record.date) return false;
+      return record.date === formattedCurrentDate;
+    });
+    
+    setDisplayRecords(currentDateRecords);
   }, [currentDate, records]);
-
 
   const loadRecords = async () => {
     try {
@@ -108,6 +131,21 @@ export default function Accounting({ navigation }) {
       console.error('Error loading records:', error);
     }
   };
+
+  useEffect(() => {
+    const loadSourceScreen = async () => {
+      try {
+        const savedSourceScreen = await AsyncStorage.getItem('sourceScreen');
+        if (savedSourceScreen) {
+          setSourceScreen(savedSourceScreen);
+        }
+      } catch (error) {
+        console.error('Error loading source screen:', error);
+      }
+    };
+  
+    loadSourceScreen();
+  }, []);
 
   const showDatePicker = () => {
     setDatePickerVisibility(true);
@@ -134,19 +172,7 @@ export default function Accounting({ navigation }) {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-
-  const updateDisplayRecords = () => {
-    const formattedCurrentDate = formatDate(currentDate);
-    const allRecords = records[0]?.items || [];
-    
-    const currentDateRecords = allRecords.filter(record => {
-        if (!record || !record.date) return false;
-        return record.date === formattedCurrentDate;
-    });
-    
-    setDisplayRecords(currentDateRecords);
-};
-
+  
   const saveRecords = async (newRecords) => {
     try {
       await AsyncStorage.setItem('accountingRecords', JSON.stringify(newRecords));

@@ -9,11 +9,20 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function MainScreen() {
   const navigation = useNavigation();
 
-  // Handle arrow button press
+  const handleSelectPlan = async (planType) => {
+    try {
+      await AsyncStorage.setItem('sourceScreen', planType);
+      navigation.navigate(planType);
+    } catch (error) {
+      console.error('Error saving source screen:', error);
+    }
+  };
+
   const handleLeftArrow = () => {
     navigation.navigate('Main2Screen');
   };
@@ -22,27 +31,33 @@ export default function MainScreen() {
     navigation.navigate('Main1Screen');
   };
   const handleConfirm = () => {
-    navigation.navigate('save365');
+    handleSelectPlan('save365');
   };
 
- const handleBack = () => {
-     Alert.alert(
-       '登出確認',
-       '您確定要登出嗎？',
-       [
-         {
-           text: '取消',
-           style: 'cancel',
-         },
-         {
-           text: '確認',
-           onPress: () => navigation.navigate('Login'),
-         },
-       ],
-       { cancelable: false }
-     );
-   };
- 
+  const handleBack = () => {
+    Alert.alert(
+      '登出確認',
+      '您確定要登出嗎？',
+      [
+        {
+          text: '取消',
+          style: 'cancel',
+        },
+        {
+          text: '確認',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('sourceScreen');
+              navigation.navigate('Login');
+            } catch (error) {
+              console.error('Error during logout:', error);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   return (
     <View style={styles.container}>

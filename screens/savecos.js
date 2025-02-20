@@ -17,8 +17,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { PieChart } from 'react-native-chart-kit';
 
-const screenWidth = Dimensions.get('window').width;
-const pieChartWidth = screenWidth * 0.85;
+const windowWidth = Dimensions.get('window').width;
+const pieChartWidth = windowWidth * 0.85;
 
 const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
   const [leftBoxFocused, setLeftBoxFocused] = useState(false);
@@ -314,7 +314,7 @@ export default function Savecos({ navigation }) {
                   accessor="population"
                   backgroundColor="transparent"
                   paddingLeft="0"
-                  center={[screenWidth * 0.15, 0]}
+                  center={[windowWidth * 0.15, 0]}
                   absolute
                   hasLegend={false}
                 />
@@ -370,21 +370,19 @@ export default function Savecos({ navigation }) {
   );
 }
 
-// 樣式設定
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal:24,
   },
   logoContainer: {
-    width: 402,
+    width: windowWidth,
     height: 100,
     backgroundColor: '#89C2D9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
   },
   logo: {
     marginTop: 54,
@@ -395,10 +393,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2A6F97',
-    marginBottom: 16,
+    marginVertical: 24,
   },
   input: {
-    width: '85%',
+    width: '100%',
     height: 50,
     borderWidth: 1,
     borderColor: '#aaa',
@@ -420,7 +418,7 @@ const styles = StyleSheet.create({
   },
   rowContainer: {
     flexDirection: 'row',
-    width: '85%',
+    width: '100%',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
@@ -511,7 +509,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#606060' 
   },
   checkButton: {
-    width: '85%',
+    width: '100%',
     height: 50,
     backgroundColor: '#2A6F97',
     borderRadius: 4,
@@ -523,7 +521,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   checkButton: {
-    width: '85%',
+    width: '100%',
     height:50,  
     position: 'absolute',
     bottom: 104, 
@@ -554,12 +552,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   chartAndCircleContainer: {
-    width: screenWidth * 0.6,
+    width: windowWidth * 0.6,
     position: 'relative',
     alignItems: 'center',
   },
   legendContainer: {
-    width: screenWidth * 0.35,
+    width: windowWidth * 0.35,
     paddingLeft: 0,
   },
   legendItem: {

@@ -3,15 +3,20 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   Image,
-  Animated,
-  TextInput,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
+  Animated,
+  Alert,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const windowWidth = Dimensions.get('window').width;
 
 export default function Save52({ navigation }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -274,15 +279,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal:24,
   },
   logoContainer: {
-    width: 402,
+    width: windowWidth,
     height: 100,
     backgroundColor: '#EEDA58',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
   },
   logo: {
     marginTop: 54,
@@ -293,10 +297,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FBBE0D',
-    marginBottom: 16,
+    marginVertical: 24,
   },
   input: {
-    width: '85%',
+    width: '100%',
     height: 50,
     borderWidth: 1,
     borderColor: '#aaa',
@@ -363,7 +367,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   checkButton: {
-    width: '85%',
+    width: '100%',
     height: 50,
     position: 'absolute',
     bottom: 104,

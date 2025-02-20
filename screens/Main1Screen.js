@@ -9,11 +9,20 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Main1Screen() {
   const navigation = useNavigation();
 
-  // Handle arrow button press
+  const handleSelectPlan = async (planType) => {
+    try {
+      await AsyncStorage.setItem('sourceScreen', planType);
+      navigation.navigate(planType);
+    } catch (error) {
+      console.error('Error saving source screen:', error);
+    }
+  };
+  
   const handleLeftArrow = () => {
     navigation.navigate('MainScreen');
   };
@@ -23,7 +32,7 @@ export default function Main1Screen() {
   };
 
   const handleConfirm = () => {
-    navigation.navigate('save52');
+    handleSelectPlan('save52');
   };
 
   const handleBack = () => {
@@ -37,7 +46,14 @@ export default function Main1Screen() {
         },
         {
           text: '確認',
-          onPress: () => navigation.navigate('Login'),
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('sourceScreen');
+              navigation.navigate('Login');
+            } catch (error) {
+              console.error('Error during logout:', error);
+            }
+          },
         },
       ],
       { cancelable: false }

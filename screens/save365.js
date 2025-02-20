@@ -3,12 +3,20 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   Image,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
   Animated,
+  Alert,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const windowWidth = Dimensions.get('window').width;
 
 export default function Save365({ navigation }) {
   const [selectedCircles, setSelectedCircles] = useState({});
@@ -16,7 +24,7 @@ export default function Save365({ navigation }) {
   const [slideAnim] = useState(new Animated.Value(0));
   const [history, setHistory] = useState([]); 
   const [fadeAnim] = useState(new Animated.Value(1));
-
+  
   // 加載保存的數據
   useEffect(() => {
     loadSavedData();
@@ -196,7 +204,7 @@ export default function Save365({ navigation }) {
         <View style={styles.iconContainer}>
         <TouchableOpacity
               style={styles.iconWrapper}
-              onPress={() => navigation.navigate('Accounting', { sourceScreen: 'Save365' })}
+              onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save365' })}
             >
               <Image
                 source={require('../assets/account.png')}
@@ -232,15 +240,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal:24,
   },
   logoContainer: {
-    width: 402,
+    width: windowWidth,
     height: 100,
     backgroundColor: '#F08080',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
   },
   logo: {
     marginTop: 54,
@@ -262,7 +269,7 @@ const styles = StyleSheet.create({
   calendarContainer: {
     flex: 1,
     flexDirection: 'row',
-    paddingHorizontal: 24,
+    padding: 24,
   },
   numbersContainer: {
     flex: 1,
@@ -295,7 +302,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   checkButton: {
-    width: '85%',
+    width: '100%',
     height:50,  
     position: 'absolute',
     bottom: 104, 

@@ -65,7 +65,7 @@ export default function Analysis() {
     const [categoryTotals, setCategoryTotals] = useState({});
     const [totalExpense, setTotalExpense] = useState(0);
     const [totalIncome, setTotalIncome] = useState(0);
-    const [hasData, setHasData] = useState(false); // New state variable
+    const [hasData, setHasData] = useState(false);
 
     useEffect(() => {
         loadRecords();
@@ -164,14 +164,14 @@ export default function Analysis() {
     };
 
     const chartData = getSortedCategories(categoryTotals)
-        .filter(([category]) => category !== '收入' && categoryTotals[category] > 0)
-        .map(([category, amount]) => ({
-            name: category,
-            population: amount,
-            color: categoryColors[category],
-            legendFontColor: '#101010',
-            legendFontSize: 12,
-        }));
+    .filter(([category]) => categoryTotals[category] > 0)
+    .map(([category, amount]) => ({
+        name: category,
+        population: amount,
+        color: categoryColors[category],
+        legendFontColor: '#101010',
+        legendFontSize: 12,
+    }));
 
     const chartConfig = {
         backgroundGradientFrom: '#ffffff',

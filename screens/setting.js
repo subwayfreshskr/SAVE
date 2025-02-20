@@ -31,10 +31,10 @@ export default function setting({ navigation }) {
     }
   };
 
-  const handleExit = () => {
+  const handlePlanChange = async () => {
     Alert.alert(
-      '登出確認',
-      '您確定要登出嗎？登出後所有記帳紀錄和存錢計畫將被清除',
+      '變更確認',
+      '您確定要變更計畫嗎？變更後所有記帳紀錄和存錢計畫將被清除',
       [
         {
           text: '取消',
@@ -45,10 +45,14 @@ export default function setting({ navigation }) {
           onPress: async () => {
             try {
               await resetAllRecords();
-              navigation.navigate('Login');
+              await AsyncStorage.removeItem('sourceScreen'); // 清除 sourceScreen
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainScreen' }],
+              });
             } catch (error) {
               Alert.alert('錯誤', '清除記錄時發生錯誤');
-              console.error('Error during logout:', error);
+              console.error('Error during plan change:', error);
             }
           },
         },
@@ -56,6 +60,36 @@ export default function setting({ navigation }) {
       { cancelable: false }
     );
   };
+
+  const handleExit = () => {
+  Alert.alert(
+    '登出確認',
+    '您確定要登出嗎？登出後所有記帳紀錄和存錢計畫將被清除',
+    [
+      {
+        text: '取消',
+        style: 'cancel',
+      },
+      {
+        text: '確認',
+        onPress: async () => {
+          try {
+            await resetAllRecords();
+            await AsyncStorage.removeItem('sourceScreen'); // 清除 sourceScreen
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          } catch (error) {
+            Alert.alert('錯誤', '清除記錄時發生錯誤');
+            console.error('Error during logout:', error);
+          }
+        },
+      },
+    ],
+    { cancelable: false }
+  );
+};
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -77,36 +111,8 @@ export default function setting({ navigation }) {
 
         <Text style={styles.sectionTitle}>關於計畫</Text>
         <TouchableOpacity style={styles.menuItem}><Text>計畫進度</Text></TouchableOpacity>
-        <TouchableOpacity 
-  style={styles.menuItem} 
-  onPress={() => {
-    Alert.alert(
-      '變更確認',
-      '您確定要變更計畫嗎？變更後所有記帳紀錄和存錢計畫將被清除',
-      [
-        {
-          text: '取消',
-          style: 'cancel',
-        },
-        {
-          text: '確認',
-          onPress: async () => {
-            try {
-              await resetAllRecords();
-              navigation.navigate('MainScreen');
-            } catch (error) {
-              Alert.alert('錯誤', '清除記錄時發生錯誤');
-              console.error('Error during logout:', error);
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  }}
->
-  <Text>變更計畫</Text>
-</TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={handlePlanChange}><Text>變更計畫</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('notify')}><Text>通知</Text></TouchableOpacity>
       </View>
         {/* 登出按鈕 */}
