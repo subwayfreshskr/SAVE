@@ -12,6 +12,7 @@ import {
   Animated,
   Alert,
   Dimensions,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +28,8 @@ export default function Save52({ navigation }) {
   const [history, setHistory] = useState([]); 
   const [fadeAnim] = useState(new Animated.Value(1));
   const [inputValue, setInputValue] = useState('');
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [scaleAnim] = useState(new Animated.Value(0.5));
 
   useEffect(() => {
     loadSavedData();
@@ -141,6 +144,37 @@ export default function Save52({ navigation }) {
       rows.push(currentNumbers.slice(i, i + 4));
     }
     return rows;
+  };
+
+  useEffect(() => {
+    if (history.length === 52 && !showCompletionModal) {
+      setShowCompletionModal(true);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [history]);
+  const resetAllCircles = async () => {
+    setSelectedCircles({});
+    setHistory([]);
+    setCurrentPage(0);
+    await saveData([], {});
+    closeModal();
+  };
+
+  const closeModal = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setShowCompletionModal(false));
+  };
+
+  const calculateTotalAmount = () => {
+    return history.reduce((total, item) => total + Number(item.amount), 0);
   };
 
   return (
@@ -269,6 +303,47 @@ export default function Save52({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={showCompletionModal}
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalOverlay}>
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  transform: [{ scale: scaleAnim }],
+                }
+              ]}
+            >
+              <Image
+                source={require('../assets/52周.png')}
+                style={styles.congratsImage}
+              />
+              <Text style={styles.congratsTitle}>恭喜你完成了 52 周儲蓄挑戰!</Text>
+              <Text style={styles.congratsText}>
+                你已經成功存了總共 <Text style={styles.amountText}>${calculateTotalAmount().toLocaleString()}</Text> 元
+              </Text>            
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.resetButton}
+                  onPress={resetAllCircles}
+                >
+                  <Text style={styles.buttonText}>重新開始挑戰</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={closeModal}
+                >
+                  <Text style={styles.buttonText}>繼續</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        </Modal>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -415,5 +490,71 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 8,
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: 'white',
+    borderRadius: 4,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  congratsImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+  },
+  congratsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FBBE0D', // Changed to match Save52's color scheme
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  congratsText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  amountText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FBBE0D', // Changed to match Save52's color scheme
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  resetButton: {
+    backgroundColor: '#FBBE0D',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  closeButton: {
+    backgroundColor: '#FBBE0D',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 4,
+    marginLeft: 12,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

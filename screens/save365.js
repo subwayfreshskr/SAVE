@@ -26,19 +26,28 @@ export default function Save365({ navigation }) {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(0.5));
   
-  // 計算總金額
-  const totalAmount = 66795; // (1+365)*365/2
+  const calculateTotalAmount = () => {
+    return 66795; // (1 + 365) * 365 / 2
+  };
 
-  // 加載保存的數據
   useEffect(() => {
     loadSavedData();
-  }, []);
+    
+    // 監聽頁面焦點變化
+    const unsubscribe = navigation.addListener('focus', () => {
+      // 當頁面重新獲得焦點時，檢查是否需要顯示 modal
+      loadSavedData();
+    });
+
+    // 清理監聽器
+    return unsubscribe;
+  }, [navigation]);
+
 
   useEffect(() => {
-    // 檢查是否已完成所有 365 個圓圈
-    if (history.length === 365 && !showCompletionModal) {
+    if (history.length === 365) {
       setShowCompletionModal(true);
-      // 當彈窗顯示時執行動畫
+      // 執行放大動畫
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 8,
@@ -285,48 +294,47 @@ export default function Save365({ navigation }) {
         </View>
       </View>
       
-      {/* 完成後的彈窗 */}
       <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showCompletionModal}
-        onRequestClose={closeModal}
-      >
-        <View style={styles.modalOverlay}>
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                transform: [{ scale: scaleAnim }],
-              }
-            ]}
-          >
-            <Image
-              source={require('../assets/52周.png')}
-              style={styles.congratsImage}
-            />
-            <Text style={styles.congratsTitle}>恭喜你完成了 365 天儲蓄挑戰!</Text>
-            <Text style={styles.congratsText}>
-              你已經成功存了總共 <Text style={styles.amountText}>${totalAmount.toLocaleString()}</Text> 元
-            </Text>            
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.resetButton}
-                onPress={resetAllCircles}
+                animationType="fade"
+                transparent={true}
+                visible={showCompletionModal}
+                onRequestClose={closeModal}
               >
-                <Text style={styles.buttonText}>重新開始挑戰</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={closeModal}
-              >
-                <Text style={styles.buttonText}>繼續</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
-      </Modal>
+                <View style={styles.modalOverlay}>
+                  <Animated.View 
+                    style={[
+                      styles.modalContent,
+                      {
+                        transform: [{ scale: scaleAnim }],
+                      }
+                    ]}
+                  >
+                    <Image
+                      source={require('../assets/52周.png')}
+                      style={styles.congratsImage}
+                    />
+                    <Text style={styles.congratsTitle}>恭喜你完成了365天儲蓄挑戰!</Text>
+                    <Text style={styles.congratsText}>
+                      你已經成功存了總共 <Text style={styles.amountText}>${calculateTotalAmount().toLocaleString()}</Text>元
+                    </Text>            
+                    <View style={styles.buttonContainer}>
+                      <TouchableOpacity
+                        style={styles.resetButton}
+                        onPress={resetAllCircles}
+                      >
+                        <Text style={styles.buttonText}>重新開始挑戰</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={closeModal}
+                      >
+                        <Text style={styles.buttonText}>繼續</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Animated.View>
+                </View>
+              </Modal>
     </View>
   );
 }
@@ -425,7 +433,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '85%',
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: 4,
     padding: 24,
     alignItems: 'center',
     elevation: 5,
@@ -442,7 +450,7 @@ const styles = StyleSheet.create({
   congratsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#EA4335',
+    color: '#EA4335', // Changed to match Save52's color scheme
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -455,16 +463,29 @@ const styles = StyleSheet.create({
   amountText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#EA4335',
+    color: '#ea4335',
   },
-  closeButton: {
-    backgroundColor: '#EA4335',
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  resetButton: {
+    backgroundColor: '#ea4335',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 8,
+    borderRadius: 4,
+    marginRight: 12,
   },
-  closeButtonText: {
+  closeButton: {
+    backgroundColor: '#ea4335',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 4,
+    marginLeft: 12,
+  },
+  buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
