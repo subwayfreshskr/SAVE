@@ -26,6 +26,7 @@ export default function Save52({ navigation }) {
   const [currentPage, setCurrentPage] = useState(0);
   const [slideAnim] = useState(new Animated.Value(0));
   const [history, setHistory] = useState([]); 
+  const [completedHistory, setCompletedHistory] = useState([]);
   const [fadeAnim] = useState(new Animated.Value(1));
   const [inputValue, setInputValue] = useState('');
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -40,6 +41,7 @@ export default function Save52({ navigation }) {
       const savedHistory = await AsyncStorage.getItem('save52History');
       const savedCircles = await AsyncStorage.getItem('save52Circles');
       const savedSalary = await AsyncStorage.getItem('save52Salary');
+      const savedCompletedHistory = await AsyncStorage.getItem('save52CompletedHistory');
       
       if (savedHistory) {
         setHistory(JSON.parse(savedHistory));
@@ -50,16 +52,22 @@ export default function Save52({ navigation }) {
       if (savedSalary) {
         setSalary(savedSalary);
       }
+      if (savedCompletedHistory) {
+        setCompletedHistory(JSON.parse(savedCompletedHistory));
+      }
     } catch (error) {
       console.error('Error loading saved data:', error);
     }
   };
   
-  const saveData = async (newHistory, newSelectedCircles) => {
+  const saveData = async (newHistory, newSelectedCircles, newCompletedHistory) => {
     try {
       await AsyncStorage.setItem('save52History', JSON.stringify(newHistory));
       await AsyncStorage.setItem('save52Circles', JSON.stringify(newSelectedCircles));
       await AsyncStorage.setItem('save52Salary', salary);
+      if (newCompletedHistory) {
+        await AsyncStorage.setItem('save52CompletedHistory', JSON.stringify(newCompletedHistory));
+      }
     } catch (error) {
       console.error('Error saving data:', error);
     }
@@ -136,7 +144,6 @@ export default function Save52({ navigation }) {
     Array.from({ length: 24 }, (_, i) => i + 1),
     Array.from({ length: 28 }, (_, i) => i + 25)
   ];
-
   const getCurrentPageRows = () => {
     const currentNumbers = pages[currentPage];
     const rows = [];
@@ -157,11 +164,25 @@ export default function Save52({ navigation }) {
       }).start();
     }
   }, [history]);
+
   const resetAllCircles = async () => {
+    // Save the current completed challenge to completedHistory
+    const currentChallenge = {
+      completedDate: new Date().toISOString(),
+      history: [...history],
+      totalAmount: calculateTotalAmount()
+    };
+    
+    const newCompletedHistory = [...completedHistory, currentChallenge];
+    setCompletedHistory(newCompletedHistory);
+
+    // Reset the current challenge
     setSelectedCircles({});
-    setHistory([]);
     setCurrentPage(0);
-    await saveData([], {});
+    setHistory([]); // Clear current history for new challenge
+
+    // Save all updates
+    await saveData([], {}, newCompletedHistory);
     closeModal();
   };
 
@@ -266,7 +287,8 @@ export default function Save52({ navigation }) {
           style={styles.checkButton}
           onPress={() => navigation.navigate('History52', { 
             history,
-            currentSalary: salary
+            currentSalary: salary,
+            completedHistory
           })}
         >
           <Text style={styles.checkButtonText}>查看目前已存金額</Text>
@@ -407,7 +429,7 @@ const styles = StyleSheet.create({
   },
   calendarContainerSecondPage: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 20,
   },
   numbersContainer: {
@@ -517,7 +539,7 @@ const styles = StyleSheet.create({
   congratsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FBBE0D', // Changed to match Save52's color scheme
+    color: '#FBBE0D',
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -530,7 +552,7 @@ const styles = StyleSheet.create({
   amountText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FBBE0D', // Changed to match Save52's color scheme
+    color: '#FBBE0D',
   },
   buttonContainer: {
     flexDirection: 'row',

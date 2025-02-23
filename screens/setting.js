@@ -13,6 +13,59 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function setting({ navigation }) {
+  const [sourceScreen, setSourceScreen] = useState(null);
+  useEffect(() => {
+    let unsubscribeFocus = null;
+  
+    const loadInitialData = async () => {
+      const params = navigation.getState().routes.find(
+        route => route.name === 'Setting'
+      )?.params;
+  
+      // 保存來源頁面信息
+      if (params?.sourceScreen) {
+        setSourceScreen(params.sourceScreen);
+        // 可選：保存到 AsyncStorage
+        try {
+          await AsyncStorage.setItem('sourceScreen', params.sourceScreen);
+        } catch (error) {
+          console.error('Error saving source screen:', error);
+        }
+      } else {
+        // 如果params中沒有，嘗試從AsyncStorage讀取
+        try {
+          const savedSourceScreen = await AsyncStorage.getItem('sourceScreen');
+          if (savedSourceScreen) {
+            setSourceScreen(savedSourceScreen);
+          }
+        } catch (error) {
+          console.error('Error loading source screen:', error);
+        }
+      }
+    };
+  
+    // 初始載入
+    loadInitialData();
+  
+    // 監聽頁面聚焦事件
+    unsubscribeFocus = navigation.addListener('focus', () => {
+      loadInitialData();
+    });
+  
+    return () => {
+      if (unsubscribeFocus) {
+        unsubscribeFocus();
+      }
+    };
+  }, [navigation]);
+
+  const handleHomePress = () => {
+    if (sourceScreen) {
+      navigation.navigate(sourceScreen);
+    } else {
+      Alert.alert('錯誤', '無法找到主頁面');
+    }
+  };
   const resetAllRecords = async () => {
     try {
       // 清除特定的記帳記錄
@@ -129,13 +182,16 @@ export default function setting({ navigation }) {
             />
             <Text style={styles.iconText}>記帳</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconWrapper}>
-            <Image 
-              source={require('../assets/home-line.png')}
-              style={styles.menuIcon}
-            />
-            <Text style={styles.iconText}>主頁</Text>
-          </TouchableOpacity>
+          <TouchableOpacity 
+                        style={styles.iconWrapper}
+                        onPress={handleHomePress}
+                      >
+                        <Image
+                          source={require('../assets/home-line.png')}
+                          style={styles.menuIcon}
+                        />
+                        <Text style={styles.iconText}>主頁</Text>
+                      </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('Setting')}>
                 <Image 
                   source={require('../assets/setting1.png')}
