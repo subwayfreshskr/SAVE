@@ -8,11 +8,9 @@ import {
   Image,
   TouchableWithoutFeedback,
   Keyboard,
-  ScrollView,
   Animated,
-  Alert,
-  Dimensions,
   Modal,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,49 +22,65 @@ export default function Save52({ navigation }) {
   const [salary, setSalary] = useState('');
   const [selectedCircles, setSelectedCircles] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [slideAnim] = useState(new Animated.Value(0));
-  const [history, setHistory] = useState([]); 
-  const [completedHistory, setCompletedHistory] = useState([]);
   const [fadeAnim] = useState(new Animated.Value(1));
-  const [inputValue, setInputValue] = useState('');
+  const [history, setHistory] = useState([]);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(0.5));
+  const [allChallenges, setAllChallenges] = useState([]);
+  const [currentChallengeId, setCurrentChallengeId] = useState(null);
 
   useEffect(() => {
     loadSavedData();
   }, []);
+
+  useEffect(() => {
+    const currentChallengeHistory = history.filter(item => item.challengeId === currentChallengeId);
+    if (currentChallengeHistory.length === 52 && !showCompletionModal) {
+      setShowCompletionModal(true);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [history, currentChallengeId]);
 
   const loadSavedData = async () => {
     try {
       const savedHistory = await AsyncStorage.getItem('save52History');
       const savedCircles = await AsyncStorage.getItem('save52Circles');
       const savedSalary = await AsyncStorage.getItem('save52Salary');
-      const savedCompletedHistory = await AsyncStorage.getItem('save52CompletedHistory');
+      const savedAllChallenges = await AsyncStorage.getItem('save52AllChallenges');
+      const savedCurrentChallengeId = await AsyncStorage.getItem('save52CurrentChallengeId');
       
-      if (savedHistory) {
-        setHistory(JSON.parse(savedHistory));
-      }
-      if (savedCircles) {
-        setSelectedCircles(JSON.parse(savedCircles));
-      }
-      if (savedSalary) {
-        setSalary(savedSalary);
-      }
-      if (savedCompletedHistory) {
-        setCompletedHistory(JSON.parse(savedCompletedHistory));
+      if (savedHistory) setHistory(JSON.parse(savedHistory));
+      if (savedCircles) setSelectedCircles(JSON.parse(savedCircles));
+      if (savedSalary) setSalary(savedSalary);
+      if (savedAllChallenges) setAllChallenges(JSON.parse(savedAllChallenges));
+      
+      if (!savedCurrentChallengeId) {
+        const newChallengeId = Date.now().toString();
+        setCurrentChallengeId(newChallengeId);
+        await AsyncStorage.setItem('save52CurrentChallengeId', newChallengeId);
+      } else {
+        setCurrentChallengeId(savedCurrentChallengeId);
       }
     } catch (error) {
       console.error('Error loading saved data:', error);
     }
   };
-  
-  const saveData = async (newHistory, newSelectedCircles, newCompletedHistory) => {
+
+  const saveData = async (newHistory, newSelectedCircles, newAllChallenges, newCurrentChallengeId) => {
     try {
       await AsyncStorage.setItem('save52History', JSON.stringify(newHistory));
       await AsyncStorage.setItem('save52Circles', JSON.stringify(newSelectedCircles));
       await AsyncStorage.setItem('save52Salary', salary);
-      if (newCompletedHistory) {
-        await AsyncStorage.setItem('save52CompletedHistory', JSON.stringify(newCompletedHistory));
+      if (newAllChallenges) {
+        await AsyncStorage.setItem('save52AllChallenges', JSON.stringify(newAllChallenges));
+      }
+      if (newCurrentChallengeId) {
+        await AsyncStorage.setItem('save52CurrentChallengeId', newCurrentChallengeId);
       }
     } catch (error) {
       console.error('Error saving data:', error);
@@ -75,46 +89,71 @@ export default function Save52({ navigation }) {
 
   const handleCirclePress = async (number) => {
     const currentDate = new Date().toLocaleDateString();
-    
-    // 檢查這個圈圈是否已經在歷史記錄中
-    const existingRecord = history.find(item => item.number === number);
+    const currentChallengeRecords = history.filter(item => item.challengeId === currentChallengeId);
+    const existingRecord = currentChallengeRecords.find(item => item.number === number);
 
     if (selectedCircles[number]) {
-      // 如果圈圈已經被選中，則取消選中
       const newSelectedCircles = { ...selectedCircles };
       delete newSelectedCircles[number];
       setSelectedCircles(newSelectedCircles);
 
-      // 從歷史記錄中移除
-      const newHistory = history.filter(item => item.number !== number);
+      const newHistory = history.filter(item => !(item.number === number && item.challengeId === currentChallengeId));
       setHistory(newHistory);
 
-      // 保存更新後的數據
-      await saveData(newHistory, newSelectedCircles);
+      await saveData(newHistory, newSelectedCircles, allChallenges, currentChallengeId);
     } else {
-      // 如果圈圈未被選中
       const newSelectedCircles = {
         ...selectedCircles,
-        [number]: require('../assets/check52.png')
+        [number]: true
       };
       setSelectedCircles(newSelectedCircles);
 
-      let newHistory;
-      if (existingRecord) {
-        // 如果這個圈圈之前存在記錄，保留原來的金額
-        newHistory = [...history];
-      } else {
-        // 如果是新的圈圈，使用當前輸入的金額
-        newHistory = [...history, {
+      if (!existingRecord) {
+        const newHistory = [...history, {
           number,
           date: currentDate,
-          amount: salary || '0',  // 儲存選中時的金額
+          amount: salary || '0',
+          challengeId: currentChallengeId
         }];
+        setHistory(newHistory);
+        await saveData(newHistory, newSelectedCircles, allChallenges, currentChallengeId);
       }
-      
-      setHistory(newHistory);
-      await saveData(newHistory, newSelectedCircles);
     }
+  };
+
+  const startNewChallenge = async () => {
+    const newChallengeId = Date.now().toString();
+    const currentChallengeRecords = history.filter(item => item.challengeId === currentChallengeId);
+    
+    const currentChallenge = {
+      id: currentChallengeId,
+      completedDate: new Date().toISOString(),
+      history: currentChallengeRecords,
+      totalAmount: calculateTotalAmount(currentChallengeRecords),
+      salary: salary
+    };
+
+    const newAllChallenges = [...allChallenges, currentChallenge];
+    setAllChallenges(newAllChallenges);
+    
+    setSelectedCircles({});
+    setCurrentPage(0);
+    setCurrentChallengeId(newChallengeId);
+
+    await saveData(history, {}, newAllChallenges, newChallengeId);
+    closeModal();
+  };
+
+  const calculateTotalAmount = (records = history) => {
+    return records.reduce((total, item) => total + Number(item.amount), 0);
+  };
+
+  const closeModal = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setShowCompletionModal(false));
   };
 
   const handlePageChange = (direction) => {
@@ -144,6 +183,7 @@ export default function Save52({ navigation }) {
     Array.from({ length: 24 }, (_, i) => i + 1),
     Array.from({ length: 28 }, (_, i) => i + 25)
   ];
+
   const getCurrentPageRows = () => {
     const currentNumbers = pages[currentPage];
     const rows = [];
@@ -152,52 +192,8 @@ export default function Save52({ navigation }) {
     }
     return rows;
   };
-
-  useEffect(() => {
-    if (history.length === 52 && !showCompletionModal) {
-      setShowCompletionModal(true);
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [history]);
-
-  const resetAllCircles = async () => {
-    // Save the current completed challenge to completedHistory
-    const currentChallenge = {
-      completedDate: new Date().toISOString(),
-      history: [...history],
-      totalAmount: calculateTotalAmount()
-    };
-    
-    const newCompletedHistory = [...completedHistory, currentChallenge];
-    setCompletedHistory(newCompletedHistory);
-
-    // Reset the current challenge
-    setSelectedCircles({});
-    setCurrentPage(0);
-    setHistory([]); // Clear current history for new challenge
-
-    // Save all updates
-    await saveData([], {}, newCompletedHistory);
-    closeModal();
-  };
-
-  const closeModal = () => {
-    Animated.timing(scaleAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setShowCompletionModal(false));
-  };
-
-  const calculateTotalAmount = () => {
-    return history.reduce((total, item) => total + Number(item.amount), 0);
-  };
-
+  
+  // Rest of your component remains the same...
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -288,7 +284,7 @@ export default function Save52({ navigation }) {
           onPress={() => navigation.navigate('History52', { 
             history,
             currentSalary: salary,
-            completedHistory
+            allChallenges
           })}
         >
           <Text style={styles.checkButtonText}>查看目前已存金額</Text>
@@ -297,15 +293,15 @@ export default function Save52({ navigation }) {
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
             <TouchableOpacity
-                          style={styles.iconWrapper}
-                          onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save52' })}
-                        >
-                          <Image
-                            source={require('../assets/account.png')}
-                            style={styles.menuIcon}
-                          />
-                          <Text style={styles.iconText}>記帳</Text>
-                        </TouchableOpacity>
+              style={styles.iconWrapper}
+              onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save52' })}
+            >
+              <Image
+                source={require('../assets/account.png')}
+                style={styles.menuIcon}
+              />
+              <Text style={styles.iconText}>記帳</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.iconWrapper}>
               <Image 
                 source={require('../assets/home.png')}
@@ -325,6 +321,7 @@ export default function Save52({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+
         <Modal
           animationType="fade"
           transparent={true}
@@ -351,9 +348,9 @@ export default function Save52({ navigation }) {
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={styles.resetButton}
-                  onPress={resetAllCircles}
+                  onPress={startNewChallenge}
                 >
-                  <Text style={styles.buttonText}>重新開始挑戰</Text>
+                  <Text style={styles.buttonText}>開始新的挑戰</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity

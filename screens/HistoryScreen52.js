@@ -15,22 +15,22 @@ export default function HistoryScreen52({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
     const history = [...(route.params.history || [])].reverse();
     const currentSalary = route.params.currentSalary || '0';
+    const allChallenges = route.params.allChallenges || [];
     const itemsPerPage = 16;
     const totalPages = Math.ceil(history.length / itemsPerPage);
 
-    // 計算總金額（使用每個記錄保存的實際金額）
+    // Calculate total amount from all history records
     const totalAmount = history.reduce((sum, record) => {
         return sum + Number(record.amount);
     }, 0);
     const formattedTotalAmount = totalAmount.toLocaleString();
 
-    // 獲取當前頁的記錄
+    // Get records for current page
     const getCurrentPageData = () => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return history.slice(startIndex, startIndex + itemsPerPage);
     };
 
-    // 處理翻頁
     const handlePrevPage = () => {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
