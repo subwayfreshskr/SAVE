@@ -115,7 +115,39 @@ export default function Save365({ navigation }) {
     saveData(newHistory, newSelectedCircles);
   };
   
+  // 保存已完成的挑戰到 AsyncStorage
+  const saveCompletedChallenge = async () => {
+    try {
+      // 獲取已完成的挑戰
+      const savedCompletedChallenges = await AsyncStorage.getItem('completedChallenges');
+      let completedChallenges = [];
+      
+      if (savedCompletedChallenges) {
+        completedChallenges = JSON.parse(savedCompletedChallenges);
+      }
+      
+      // 添加當前完成的挑戰
+      const newCompletedChallenge = {
+        completionDate: new Date().toLocaleDateString(),
+        history: [...history],
+        totalAmount: calculateTotalAmount()
+      };
+      
+      completedChallenges.push(newCompletedChallenge);
+      
+      // 保存到 AsyncStorage
+      await AsyncStorage.setItem('completedChallenges', JSON.stringify(completedChallenges));
+    } catch (error) {
+      console.error('Error saving completed challenge:', error);
+    }
+  };
+  
   const resetAllCircles = async () => {
+    // 在重置前保存當前完成的挑戰
+    if (history.length === 365) {
+      await saveCompletedChallenge();
+    }
+    
     // 重置所有選中的圓圈
     setSelectedCircles({});
     // 清空歷史記錄
@@ -258,7 +290,7 @@ export default function Save365({ navigation }) {
         style={styles.checkButton}
         onPress={() => navigation.navigate('History', { history })}
       >
-        <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+        <Text style={styles.checkButtonText}>查看總共已存金額</Text>
       </TouchableOpacity>
 
       {/* 底部導航欄 */}
@@ -295,46 +327,46 @@ export default function Save365({ navigation }) {
       </View>
       
       <Modal
-                animationType="fade"
-                transparent={true}
-                visible={showCompletionModal}
-                onRequestClose={closeModal}
+        animationType="fade"
+        transparent={true}
+        visible={showCompletionModal}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ scale: scaleAnim }],
+              }
+            ]}
+          >
+            <Image
+              source={require('../assets/52周.png')}
+              style={styles.congratsImage}
+            />
+            <Text style={styles.congratsTitle}>恭喜你完成了365天儲蓄挑戰!</Text>
+            <Text style={styles.congratsText}>
+              你已經成功存了總共 <Text style={styles.amountText}>${calculateTotalAmount().toLocaleString()}</Text>元
+            </Text>            
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetAllCircles}
               >
-                <View style={styles.modalOverlay}>
-                  <Animated.View 
-                    style={[
-                      styles.modalContent,
-                      {
-                        transform: [{ scale: scaleAnim }],
-                      }
-                    ]}
-                  >
-                    <Image
-                      source={require('../assets/52周.png')}
-                      style={styles.congratsImage}
-                    />
-                    <Text style={styles.congratsTitle}>恭喜你完成了365天儲蓄挑戰!</Text>
-                    <Text style={styles.congratsText}>
-                      你已經成功存了總共 <Text style={styles.amountText}>${calculateTotalAmount().toLocaleString()}</Text>元
-                    </Text>            
-                    <View style={styles.buttonContainer}>
-                      <TouchableOpacity
-                        style={styles.resetButton}
-                        onPress={resetAllCircles}
-                      >
-                        <Text style={styles.buttonText}>重新開始挑戰</Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={closeModal}
-                      >
-                        <Text style={styles.buttonText}>繼續</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </Animated.View>
-                </View>
-              </Modal>
+                <Text style={styles.buttonText}>重新開始挑戰</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeModal}
+              >
+                <Text style={styles.buttonText}>繼續</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -419,7 +451,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 4,
-  },  
+  },   
   checkButtonText: {
     color: '#fff',
     fontSize: 16,

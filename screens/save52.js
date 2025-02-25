@@ -88,18 +88,23 @@ export default function Save52({ navigation }) {
   };
 
   const handleCirclePress = async (number) => {
+    if (!salary || Number(salary) === 0) {
+      alert('請先輸入有效的存款金額！');
+      return;
+    }
+  
     const currentDate = new Date().toLocaleDateString();
     const currentChallengeRecords = history.filter(item => item.challengeId === currentChallengeId);
     const existingRecord = currentChallengeRecords.find(item => item.number === number);
-
+  
     if (selectedCircles[number]) {
       const newSelectedCircles = { ...selectedCircles };
       delete newSelectedCircles[number];
       setSelectedCircles(newSelectedCircles);
-
+  
       const newHistory = history.filter(item => !(item.number === number && item.challengeId === currentChallengeId));
       setHistory(newHistory);
-
+  
       await saveData(newHistory, newSelectedCircles, allChallenges, currentChallengeId);
     } else {
       const newSelectedCircles = {
@@ -107,12 +112,12 @@ export default function Save52({ navigation }) {
         [number]: true
       };
       setSelectedCircles(newSelectedCircles);
-
+  
       if (!existingRecord) {
         const newHistory = [...history, {
           number,
           date: currentDate,
-          amount: salary || '0',
+          amount: salary,
           challengeId: currentChallengeId
         }];
         setHistory(newHistory);
@@ -192,8 +197,7 @@ export default function Save52({ navigation }) {
     }
     return rows;
   };
-  
-  // Rest of your component remains the same...
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -287,7 +291,7 @@ export default function Save52({ navigation }) {
             allChallenges
           })}
         >
-          <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+          <Text style={styles.checkButtonText}>查看總共已存金額</Text>
         </TouchableOpacity>
 
         <View style={styles.menuContainer}>
@@ -302,7 +306,10 @@ export default function Save52({ navigation }) {
               />
               <Text style={styles.iconText}>記帳</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconWrapper}>
+            <TouchableOpacity 
+              style={styles.iconWrapper}
+              onPress={() => navigation.navigate('Home')}
+            >
               <Image 
                 source={require('../assets/home.png')}
                 style={styles.menuIcon}
@@ -373,7 +380,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    paddingHorizontal:24,
+    paddingHorizontal: 24,
   },
   logoContainer: {
     width: windowWidth,
@@ -432,11 +439,17 @@ const styles = StyleSheet.create({
   numbersContainer: {
     flex: 1,
   },
+  numbersContainerSecondPage: {
+    paddingTop: 10,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 14,
     gap: 24,
+  },
+  rowSecondPage: {
+    marginBottom: 12,
   },
   circle: {
     width: 56,
@@ -480,7 +493,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   menuContainer: {
-    width: 402,
+    width: windowWidth,
     height: 80,
     backgroundColor: '#EEDA58',
     position: 'absolute',
