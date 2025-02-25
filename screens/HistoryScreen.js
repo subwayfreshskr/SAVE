@@ -18,7 +18,7 @@ const windowWidth = Dimensions.get('window').width;
 
 export default function HistoryScreen({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedTab, setSelectedTab] = useState('current'); // 'current' or 'completed'
+    const [selectedTab, setSelectedTab] = useState('current');
     const itemsPerPage = 16;
     const [completedChallenges, setCompletedChallenges] = useState([]);
     const [currentChallenge, setCurrentChallenge] = useState([]);

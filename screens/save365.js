@@ -8,13 +8,14 @@ import {
   Image,
   Dimensions,
   Animated,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const windowWidth = Dimensions.get('window').width;
 
-export default function Save365({ navigation }) {
+export default function Save365({ navigation, route }) {
   // 原有的 state
   const [selectedCircles, setSelectedCircles] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
@@ -30,24 +31,52 @@ export default function Save365({ navigation }) {
     return 66795; // (1 + 365) * 365 / 2
   };
 
+  // 首次加载时设置初始页码
   useEffect(() => {
-    loadSavedData();
+    // 初次加载时尝试获取保存的页码
+    const initPage = async () => {
+      try {
+        const savedPage = await AsyncStorage.getItem('currentPage');
+        if (savedPage !== null) {
+          setCurrentPage(parseInt(savedPage));
+        }
+      } catch (error) {
+        console.error('Error loading initial page:', error);
+      }
+    };
     
-    // 監聽頁面焦點變化
-    const unsubscribe = navigation.addListener('focus', () => {
-      // 當頁面重新獲得焦點時，檢查是否需要顯示 modal
+    initPage();
+    loadSavedData();
+  }, []);
+
+  // 监听路由参数变化
+  useEffect(() => {
+    if (route.params?.savedPage !== undefined) {
+      setCurrentPage(route.params.savedPage);
+    }
+  }, [route.params]);
+
+  // 添加焦点监听器
+  useEffect(() => {
+    const unsubscribeFocus = navigation.addListener('focus', () => {
+      // 当页面获得焦点时，检查route.params
+      if (route.params?.savedPage !== undefined) {
+        console.log('Restoring page from params:', route.params.savedPage);
+        setCurrentPage(route.params.savedPage);
+        // 清除参数，防止多次设置
+        navigation.setParams({ savedPage: undefined });
+      }
+      
       loadSavedData();
     });
-
-    // 清理監聽器
-    return unsubscribe;
+    
+    return unsubscribeFocus;
   }, [navigation]);
-
 
   useEffect(() => {
     if (history.length === 365) {
       setShowCompletionModal(true);
-      // 執行放大動畫
+      // 执行放大动画
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 8,
@@ -57,7 +86,17 @@ export default function Save365({ navigation }) {
     }
   }, [history]);
 
-  // 從 AsyncStorage 加載數據
+  // 保存当前页码到 AsyncStorage
+  const saveCurrentPage = async (page) => {
+    try {
+      await AsyncStorage.setItem('currentPage', page.toString());
+      console.log('Page saved to AsyncStorage:', page);
+    } catch (error) {
+      console.error('Error saving current page:', error);
+    }
+  };
+
+  // 从 AsyncStorage 加载数据
   const loadSavedData = async () => {
     try {
       const savedHistory = await AsyncStorage.getItem('savingHistory');
@@ -67,7 +106,7 @@ export default function Save365({ navigation }) {
         const parsedHistory = JSON.parse(savedHistory);
         setHistory(parsedHistory);
         
-        // 檢查是否已完成所有 365 個圓圈
+        // 检查是否已完成所有 365 个圆圈
         if (parsedHistory.length === 365) {
           setShowCompletionModal(true);
         }
@@ -80,7 +119,7 @@ export default function Save365({ navigation }) {
     }
   };
   
-  // 保存數據到 AsyncStorage
+  // 保存数据到 AsyncStorage
   const saveData = async (newHistory, newSelectedCircles) => {
     try {
       await AsyncStorage.setItem('savingHistory', JSON.stringify(newHistory));
@@ -90,18 +129,18 @@ export default function Save365({ navigation }) {
     }
   };
   
-  // 處理圓圈選擇
+  // 处理圆圈选择
   const handleCirclePress = (number) => {
     const currentDate = new Date().toLocaleDateString();
 
-    // 更新選中狀態
+    // 更新选中状态
     const newSelectedCircles = {
       ...selectedCircles,
       [number]: selectedCircles[number] ? null : require('../assets/check.png')
     };
     setSelectedCircles(newSelectedCircles);
 
-    // 更新歷史記錄
+    // 更新历史记录
     let newHistory;
     if (selectedCircles[number]) {
       newHistory = history.filter(item => item.number !== number);
@@ -115,10 +154,10 @@ export default function Save365({ navigation }) {
     saveData(newHistory, newSelectedCircles);
   };
   
-  // 保存已完成的挑戰到 AsyncStorage
+  // 保存已完成的挑战到 AsyncStorage
   const saveCompletedChallenge = async () => {
     try {
-      // 獲取已完成的挑戰
+      // 获取已完成的挑战
       const savedCompletedChallenges = await AsyncStorage.getItem('completedChallenges');
       let completedChallenges = [];
       
@@ -126,7 +165,7 @@ export default function Save365({ navigation }) {
         completedChallenges = JSON.parse(savedCompletedChallenges);
       }
       
-      // 添加當前完成的挑戰
+      // 添加当前完成的挑战
       const newCompletedChallenge = {
         completionDate: new Date().toLocaleDateString(),
         history: [...history],
@@ -143,27 +182,28 @@ export default function Save365({ navigation }) {
   };
   
   const resetAllCircles = async () => {
-    // 在重置前保存當前完成的挑戰
+    // 在重置前保存当前完成的挑战
     if (history.length === 365) {
       await saveCompletedChallenge();
     }
     
-    // 重置所有選中的圓圈
+    // 重置所有选中的圆圈
     setSelectedCircles({});
-    // 清空歷史記錄
+    // 清空历史记录
     setHistory([]);
-    // 回到第一頁
+    // 回到第一页
     setCurrentPage(0);
+    saveCurrentPage(0);
     
-    // 保存清空的數據到 AsyncStorage
+    // 保存清空的数据到 AsyncStorage
     await saveData([], {});
     
-    // 關閉彈窗
+    // 关闭弹窗
     closeModal();
   };
 
   const closeModal = () => {
-    // 關閉彈窗時執行縮小動畫
+    // 关闭弹窗时执行缩小动画
     Animated.timing(scaleAnim, {
       toValue: 0,
       duration: 300,
@@ -182,9 +222,11 @@ export default function Save365({ navigation }) {
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      setCurrentPage(prevPage => 
-        direction === 'next' ? prevPage + 1 : prevPage - 1
-      );
+      const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
+      setCurrentPage(newPage);
+      
+      // 保存最新的页码
+      saveCurrentPage(newPage);
   
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -194,7 +236,7 @@ export default function Save365({ navigation }) {
     });
   };
 
-  // 生成所有頁面的數字
+  // 生成所有页面的数字
   const pages = [];
   const totalNumbers = 365;
   const numbersPerPage = 32;
@@ -212,17 +254,29 @@ export default function Save365({ navigation }) {
     return rows;
   };
 
+  // 处理导航到历史页面，并传递当前页码
+  const navigateToHistory = () => {
+    // 在导航前保存当前页码
+    saveCurrentPage(currentPage);
+    
+    // 导航到历史页面并传递参数
+    navigation.navigate('History', { 
+      history,
+      savedPage: currentPage,
+      returnToSave365: true  // 添加标记，表示需要返回到 Save365
+    });
+  };
+
   return (
     <View style={styles.container}>
-      {/* Logo 區塊 */}
+      {/* Logo 区块 */}
       <View style={styles.logoContainer}>
         <Image
           source={require('../assets/LOGO.png')}
           style={styles.logo}
         />
       </View>
-
-      {/* 左箭頭 */}
+      {/* 左箭头 */}
       {currentPage > 0 && (
         <TouchableOpacity 
           style={styles.arrowLeft}
@@ -232,7 +286,7 @@ export default function Save365({ navigation }) {
         </TouchableOpacity>
       )}
 
-      {/* 右箭頭 */}
+      {/* 右箭头 */}
       {currentPage < pages.length - 1 && (
         <TouchableOpacity 
           style={styles.arrowRight}
@@ -242,7 +296,7 @@ export default function Save365({ navigation }) {
         </TouchableOpacity>
       )}
 
-      {/* 數字網格區域 */}
+      {/* 数字网格区域 */}
       <View style={styles.calendarContainer}>
         <TouchableOpacity 
           style={styles.arrow}
@@ -285,43 +339,52 @@ export default function Save365({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 查看按鈕 */}
+      {/* 查看按钮 */}
       <TouchableOpacity 
         style={styles.checkButton}
-        onPress={() => navigation.navigate('History', { history })}
+        onPress={navigateToHistory}
       >
         <Text style={styles.checkButtonText}>查看總共已存金額</Text>
       </TouchableOpacity>
 
-      {/* 底部導航欄 */}
+      {/* 底部导航栏 */}
       <View style={styles.menuContainer}>
         <View style={styles.iconContainer}>
           <TouchableOpacity
             style={styles.iconWrapper}
-            onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save365' })}
+            onPress={() => {
+              saveCurrentPage(currentPage);
+              navigation.navigate('Accounting', { 
+                sourceScreen: 'save365', 
+                savedPage: currentPage 
+              });
+            }}
           >
             <Image
               source={require('../assets/account.png')}
               style={styles.menuIcon}
             />
-            <Text style={styles.iconText}>記帳</Text>
+            <Text style={styles.iconText}>记帐</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper}>
             <Image 
               source={require('../assets/home.png')}
               style={styles.menuIcon}
             />
-            <Text style={styles.iconText}>主頁</Text>
+            <Text style={styles.iconText}>主页</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.iconWrapper} 
-            onPress={() => navigation.navigate('Setting')}
+            onPress={() => {
+              saveCurrentPage(currentPage);
+              navigation.navigate('Setting', { savedPage: currentPage });
+            }}
           >
             <Image 
               source={require('../assets/setting.png')}
               style={styles.menuIcon}
             />
-            <Text style={styles.iconText}>設定</Text>
+            <Text style={styles.iconText}>设定</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -482,7 +545,7 @@ const styles = StyleSheet.create({
   congratsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#EA4335', // Changed to match Save52's color scheme
+    color: '#EA4335',
     textAlign: 'center',
     marginBottom: 16,
   },

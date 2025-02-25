@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const windowWidth = Dimensions.get('window').width;
 
-export default function Save52({ navigation }) {
+export default function Save52({ navigation, route }) {
   const [isFocused, setIsFocused] = useState(false);
   const [salary, setSalary] = useState('');
   const [selectedCircles, setSelectedCircles] = useState({});
@@ -30,8 +30,44 @@ export default function Save52({ navigation }) {
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
 
   useEffect(() => {
+    // 初次加载时尝试获取保存的页码
+    const initPage = async () => {
+      try {
+        const savedPage = await AsyncStorage.getItem('currentPage');
+        if (savedPage !== null) {
+          setCurrentPage(parseInt(savedPage));
+        }
+      } catch (error) {
+        console.error('Error loading initial page:', error);
+      }
+    };
+    
+    initPage();
     loadSavedData();
   }, []);
+
+  useEffect(() => {
+    if (route.params?.savedPage !== undefined) {
+      setCurrentPage(route.params.savedPage);
+    }
+  }, [route.params]);
+  
+  useEffect(() => {
+    const unsubscribeFocus = navigation.addListener('focus', () => {
+      // 当页面获得焦点时，检查route.params
+      if (route.params?.savedPage !== undefined) {
+        console.log('Restoring page from params:', route.params.savedPage);
+        setCurrentPage(route.params.savedPage);
+        // 清除参数，防止多次设置
+        navigation.setParams({ savedPage: undefined });
+      }
+      
+      loadSavedData();
+    });
+    
+    return unsubscribeFocus;
+  }, [navigation]);
+  
 
   useEffect(() => {
     const currentChallengeHistory = history.filter(item => item.challengeId === currentChallengeId);
@@ -45,6 +81,15 @@ export default function Save52({ navigation }) {
       }).start();
     }
   }, [history, currentChallengeId]);
+
+  const saveCurrentPage = async (page) => {
+    try {
+      await AsyncStorage.setItem('currentPage', page.toString());
+      console.log('Page saved to AsyncStorage:', page);
+    } catch (error) {
+      console.error('Error saving current page:', error);
+    }
+  };
 
   const loadSavedData = async () => {
     try {
@@ -172,9 +217,11 @@ export default function Save52({ navigation }) {
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      setCurrentPage(prevPage => 
-        direction === 'next' ? prevPage + 1 : prevPage - 1
-      );
+      const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
+      setCurrentPage(newPage);
+      
+      // 保存最新的页码
+      saveCurrentPage(newPage);
   
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -284,49 +331,69 @@ export default function Save52({ navigation }) {
         </View>
 
         <TouchableOpacity 
-          style={styles.checkButton}
-          onPress={() => navigation.navigate('History52', { 
-            history,
-            currentSalary: salary,
-            allChallenges
-          })}
-        >
-          <Text style={styles.checkButtonText}>查看總共已存金額</Text>
-        </TouchableOpacity>
+  style={styles.checkButton}
+  onPress={() => {
+
+    saveCurrentPage(currentPage);
+    
+
+    navigation.navigate('History52', { 
+      history,
+      currentSalary: salary,
+      allChallenges,
+      savedPage: currentPage,
+      returnToSave52: true 
+    });
+  }}
+>
+  <Text style={styles.checkButtonText}>查看總共已存金額</Text>
+</TouchableOpacity>
 
         <View style={styles.menuContainer}>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity
-              style={styles.iconWrapper}
-              onPress={() => navigation.navigate('Accounting', { sourceScreen: 'save52' })}
-            >
-              <Image
-                source={require('../assets/account.png')}
-                style={styles.menuIcon}
-              />
-              <Text style={styles.iconText}>記帳</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.iconWrapper}
-              onPress={() => navigation.navigate('Home')}
-            >
-              <Image 
-                source={require('../assets/home.png')}
-                style={styles.menuIcon}
-              />
-              <Text style={styles.iconText}>主頁</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.iconWrapper} 
-              onPress={() => navigation.navigate('Setting')}
-            >
-              <Image 
-                source={require('../assets/setting.png')}
-                style={styles.menuIcon}
-              />
-              <Text style={styles.iconText}>設定</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.iconContainer}>
+  <TouchableOpacity
+    style={styles.iconWrapper}
+    onPress={() => {
+      saveCurrentPage(currentPage);
+      navigation.navigate('Accounting', { 
+        sourceScreen: 'save52', 
+        savedPage: currentPage 
+      });
+    }}
+  >
+    <Image
+      source={require('../assets/account.png')}
+      style={styles.menuIcon}
+    />
+    <Text style={styles.iconText}>記帳</Text>
+  </TouchableOpacity>
+  <TouchableOpacity 
+    style={styles.iconWrapper}
+    onPress={() => {
+      saveCurrentPage(currentPage);
+      navigation.navigate('Home');
+    }}
+  >
+    <Image 
+      source={require('../assets/home.png')}
+      style={styles.menuIcon}
+    />
+    <Text style={styles.iconText}>主頁</Text>
+  </TouchableOpacity>
+  <TouchableOpacity 
+    style={styles.iconWrapper} 
+    onPress={() => {
+      saveCurrentPage(currentPage);
+      navigation.navigate('Setting', { savedPage: currentPage });
+    }}
+  >
+    <Image 
+      source={require('../assets/setting.png')}
+      style={styles.menuIcon}
+    />
+    <Text style={styles.iconText}>設定</Text>
+  </TouchableOpacity>
+</View>
         </View>
 
         <Modal
