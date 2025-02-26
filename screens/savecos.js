@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Svg, Text as SVGText } from 'react-native-svg';
+import { Svg, Path, G, Text as SVGText } from 'react-native-svg';
 import {
   StyleSheet,
   View,
@@ -15,10 +15,72 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { PieChart } from 'react-native-chart-kit';
+// 移除 PieChart 导入，因为我们将使用自定义的
+// import { PieChart } from 'react-native-chart-kit';
 
 const windowWidth = Dimensions.get('window').width;
 const pieChartWidth = windowWidth * 0.85;
+
+// 将 CustomPieChart 移动到组件外部
+const CustomPieChart = ({ data, salary }) => {
+  const total = data.reduce((sum, item) => sum + item.population, 0);
+  let currentAngle = 0;
+
+  return (
+    <Svg width={pieChartWidth} height={220}>
+      <G x={pieChartWidth / 2} y={110}>
+        {data.map((item, index) => {
+          const percentage = item.population / total;
+          const angle = percentage * 360;
+          const radius = 80;
+          
+          const labelAngle = currentAngle + (angle / 2);
+          const labelRadius = radius * 0.6;
+          const labelX = Math.cos((labelAngle - 90) * Math.PI / 180) * labelRadius;
+          const labelY = Math.sin((labelAngle - 90) * Math.PI / 180) * labelRadius;
+
+          // 计算金额
+          const amount = (parseFloat(salary) || 0) * percentage;
+          
+          // 创建扇形路径
+          const startX = Math.cos((currentAngle - 90) * Math.PI / 180) * radius;
+          const startY = Math.sin((currentAngle - 90) * Math.PI / 180) * radius;
+          const endX = Math.cos((currentAngle + angle - 90) * Math.PI / 180) * radius;
+          const endY = Math.sin((currentAngle + angle - 90) * Math.PI / 180) * radius;
+          
+          const path = `
+            M 0 0
+            L ${startX} ${startY}
+            A ${radius} ${radius} 0 ${angle > 180 ? 1 : 0} 1 ${endX} ${endY}
+            Z
+          `;
+
+          const element = (
+            <G key={index}>
+              <Path
+                d={path}
+                fill={item.color}
+              />
+              <SVGText
+                x={labelX}
+                y={labelY}
+                fill="white"
+                fontSize="12"
+                textAnchor="middle"
+                alignmentBaseline="middle"
+              >
+                {amount.toLocaleString()}
+              </SVGText>
+            </G>
+          );
+
+          currentAngle += angle;
+          return element;
+        })}
+      </G>
+    </Svg>
+  );
+};
 
 const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
   const [leftBoxFocused, setLeftBoxFocused] = useState(false);
@@ -26,67 +88,6 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
   const [isEditingLeft, setIsEditingLeft] = useState(false);
   const [isEditingRight, setIsEditingRight] = useState(false);
   const slideAnim = useState(new Animated.Value(0))[0];
-
-  const CustomPieChart = ({ data, salary }) => {
-    const total = data.reduce((sum, item) => sum + item.population, 0);
-    let currentAngle = 0;
-  
-    return (
-      <Svg width={pieChartWidth} height={220}>
-        <G x={pieChartWidth / 2} y={110}>
-          {data.map((item, index) => {
-            const percentage = item.population / total;
-            const angle = percentage * 360;
-            const radius = 80;
-            
-            // 計算扇形區域中心點的位置
-            const labelAngle = currentAngle + (angle / 2);
-            const labelRadius = radius * 0.6; // 調整標籤距離圓心的距離
-            const labelX = Math.cos((labelAngle - 90) * Math.PI / 180) * labelRadius;
-            const labelY = Math.sin((labelAngle - 90) * Math.PI / 180) * labelRadius;
-  
-            // 計算金額
-            const amount = (parseFloat(salary) || 0) * percentage;
-            
-            // 創建扇形路徑
-            const startX = Math.cos((currentAngle - 90) * Math.PI / 180) * radius;
-            const startY = Math.sin((currentAngle - 90) * Math.PI / 180) * radius;
-            const endX = Math.cos((currentAngle + angle - 90) * Math.PI / 180) * radius;
-            const endY = Math.sin((currentAngle + angle - 90) * Math.PI / 180) * radius;
-            
-            const path = `
-              M 0 0
-              L ${startX} ${startY}
-              A ${radius} ${radius} 0 ${angle > 180 ? 1 : 0} 1 ${endX} ${endY}
-              Z
-            `;
-  
-            const element = (
-              <G key={index}>
-                <Path
-                  d={path}
-                  fill={item.color}
-                />
-                <SVGText
-                  x={labelX}
-                  y={labelY}
-                  fill="white"
-                  fontSize="12"
-                  textAnchor="middle"
-                  alignmentBaseline="middle"
-                >
-                  ${amount.toLocaleString()}
-                </SVGText>
-              </G>
-            );
-  
-            currentAngle += angle;
-            return element;
-          })}
-        </G>
-      </Svg>
-    );
-  };
 
   React.useEffect(() => {
     Animated.timing(slideAnim, {
@@ -98,57 +99,56 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
 
   return (
     <View style={styles.rowContainer}>
-      {/* 左側欄位 */}
+      {/* 左侧栏位 */}
       <View style={[styles.leftBox,leftBoxFocused && styles.focusedBox]}>
-  {isDeleteMode && (
-    <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-      <Icon name="delete" size={20} color="#606060" />
-    </TouchableOpacity>
-  )}
-  {isEditingLeft ? (
-    <TextInput
-      style={styles.textInput}
-      value={leftText}
-      onChangeText={setLeftText}
-      autoFocus
-      onFocus={() => setLeftBoxFocused(true)}
-      onBlur={() => {setLeftBoxFocused(false);setIsEditingLeft(false);
-      }}
-    />
-  ) : (
-    <TouchableOpacity onPress={() => {
-      setIsEditingLeft(true);
-      setLeftBoxFocused(true);
-    }} 
-     style={styles.editableText}>
-      <Text style={styles.text}>{leftText}</Text>
-      <Icon name="edit" size={20} color="#2A6F97" style={styles.editIcon} />
-    </TouchableOpacity>
-  )}
-</View>
+        {isDeleteMode && (
+          <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+            <Icon name="delete" size={20} color="#606060" />
+          </TouchableOpacity>
+        )}
+        {isEditingLeft ? (
+          <TextInput
+            style={styles.textInput}
+            value={leftText}
+            onChangeText={setLeftText}
+            autoFocus
+            onFocus={() => setLeftBoxFocused(true)}
+            onBlur={() => {setLeftBoxFocused(false);setIsEditingLeft(false);
+            }}
+          />
+        ) : (
+          <TouchableOpacity onPress={() => {
+            setIsEditingLeft(true);
+            setLeftBoxFocused(true);
+          }} 
+          style={styles.editableText}>
+            <Text style={styles.text}>{leftText}</Text>
+            <Icon name="edit" size={20} color="#2A6F97" style={styles.editIcon} />
+          </TouchableOpacity>
+        )}
+      </View>
 
-
-      {/* 右側欄位 */}
+      {/* 右侧栏位 */}
       <View style={[styles.rightBox,rightBoxFocused && styles.focusedBox]}>
         {isEditingRight ? (
           <TextInput
             style={styles.textInput}
             value={rightNumber === "0" ? "" : rightNumber}  
             onChangeText={(num) => {
-              let sanitizedNumber = num.replace(/^0+/, ""); // 移除前導 0
+              let sanitizedNumber = num.replace(/^0+/, ""); // 移除前导 0
               if (sanitizedNumber === "") sanitizedNumber = "0";
 
-              // 檢查是否超過 10
+              // 检查是否超过 10
               if (parseInt(sanitizedNumber, 10) > 10) {
-                Alert.alert("數值不能超過 10，請重新輸入！");
+                Alert.alert("数值不能超过 10，请重新输入！");
                 return;
               }
 
-              // 計算新數值總和
+              // 计算新数值总和
               const newTotal = rowData.reduce((sum, row) => sum + (row.rightNumber === rightNumber ? parseInt(sanitizedNumber, 10) : parseInt(row.rightNumber, 10)), 0);
 
               if (newTotal > 10) {
-                Alert.alert("所有數值總和不能超過 10，請重新輸入！");
+                Alert.alert("10，请重新输入！");
                 return;
               }
 
@@ -187,7 +187,7 @@ export default function Savecos({ navigation }) {
 
   const addNewRow = () => {
     if (rowData.length >= 10) {
-      Alert.alert("最多只能有 10 個項目！");
+      Alert.alert("最多只能有 10 个項目！");
       return;
     }
     const newId = rowData.length + 1;
@@ -245,7 +245,8 @@ export default function Savecos({ navigation }) {
           <Image source={require('../assets/LOGO.png')} style={styles.logo} />
         </View>
 
-        <Text style={styles.title}>請輸入本月薪水金額</Text>
+        <Text style={styles.title}>請輸入本月薪水金額
+        </Text>
         <TextInput
           style={[styles.input, isFocused && styles.inputFocused]}
           placeholder="輸入金額"
@@ -260,7 +261,7 @@ export default function Savecos({ navigation }) {
           onBlur={() => setIsFocused(false)}
         />
 
-<ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {rowData.map((item) => (
             <RowItem
               key={item.id}
@@ -302,21 +303,10 @@ export default function Savecos({ navigation }) {
           <View style={styles.chartSection}>
             <View style={styles.chartOuterContainer}>
               <View style={styles.chartAndCircleContainer}>
-                <PieChart
+                {/* 使用自定义的 CustomPieChart 替换原来的 PieChart */}
+                <CustomPieChart
                   data={getChartData()}
-                  width={pieChartWidth}
-                  height={220}
-                  chartConfig={{
-                    backgroundGradientFrom: '#fff',
-                    backgroundGradientTo: '#fff',
-                    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                  }}
-                  accessor="population"
-                  backgroundColor="transparent"
-                  paddingLeft="0"
-                  center={[windowWidth * 0.15, 0]}
-                  absolute
-                  hasLegend={false}
+                  salary={salary}
                 />
               </View>
               <View style={styles.legendContainer}>
@@ -331,38 +321,38 @@ export default function Savecos({ navigation }) {
             </View>
           </View>
         </ScrollView>
-        {/* 查看按鈕 */}
+        {/* 查看按钮 */}
         <TouchableOpacity style={styles.checkButton}>
-          <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+          <Text style={styles.checkButtonText}>查看目前已存金额</Text>
         </TouchableOpacity>
 
-        {/* 底部導航欄 */}
+        {/* 底部导航栏 */}
         <View style={styles.menuContainer}>
           <View style={styles.iconContainer}>
             <TouchableOpacity
-            style={styles.iconWrapper}
-            onPress={() => navigation.navigate('Accounting', { sourceScreen: 'savecos' })}
+              style={styles.iconWrapper}
+              onPress={() => navigation.navigate('Accounting', { sourceScreen: 'savecos' })}
             >
-            <Image
-            source={require('../assets/account.png')}
-            style={styles.menuIcon}
-            />
-            <Text style={styles.iconText}>記帳</Text>
+              <Image
+                source={require('../assets/account.png')}
+                style={styles.menuIcon}
+              />
+              <Text style={styles.iconText}>記帳</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconWrapper}>
-                          <Image 
-                            source={require('../assets/home.png')}
-                            style={styles.menuIcon}
-                          />
-                          <Text style={styles.iconText}>主頁</Text>
-                        </TouchableOpacity>
+              <Image 
+                source={require('../assets/home.png')}
+                style={styles.menuIcon}
+              />
+              <Text style={styles.iconText}>主頁</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('Setting')}>
-                  <Image 
-                    source={require('../assets/setting.png')}
-                    style={styles.menuIcon}
-                  />
-                  <Text style={styles.iconText}>設定</Text>
-                </TouchableOpacity>
+              <Image 
+                source={require('../assets/setting.png')}
+                style={styles.menuIcon}
+              />
+              <Text style={styles.iconText}>設定</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -422,17 +412,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-    leftBox: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      width: 215,
-      height: 50,
-      padding: 8,
-      borderWidth: 1,
-      borderColor: '#aaa',
-      borderRadius: 4,
-      justifyContent: 'space-between', 
-    },    
+  leftBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 250,
+    height: 50,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 4,
+    justifyContent: 'space-between', 
+  },    
   editableText: {
     flex: 1,
     flexDirection: 'row',
@@ -456,7 +446,7 @@ const styles = StyleSheet.create({
     color: '#2A6F97',
   },
   rightBox: {
-    width: 57,
+    width: 80,
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
