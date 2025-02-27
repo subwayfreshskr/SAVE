@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function HistoryScreen52({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedTab, setSelectedTab] = useState('current'); // 'current' or 'completed'
-    const itemsPerPage = 16;
+    const itemsPerPage = 24;
     const [completedChallenges, setCompletedChallenges] = useState([]);
     const [currentChallenge, setCurrentChallenge] = useState([]);
     
@@ -262,14 +262,6 @@ export default function HistoryScreen52({ route, navigation }) {
                         : renderCurrentChallenge()
                     }
                 </View>
-
-                <View style={styles.picContainer}>
-                    <Image
-                        source={require('../assets/52周.png')}
-                        style={styles.pic}
-                    />
-                </View>
-
                 {/* 底部導航欄 */}
                 <View style={styles.menuContainer}>
                     <View style={styles.iconContainer}>
@@ -469,12 +461,12 @@ const styles = StyleSheet.create({
     arrowLeft: {
         zIndex: 1,
         position: 'absolute',
-        left: 0,
+        left: 16,
     },
     arrowRight: {
         zIndex: 1,
         position: 'absolute',
-        right: 0,
+        right: 16,
     },
     menuContainer: {
         width: '100%',

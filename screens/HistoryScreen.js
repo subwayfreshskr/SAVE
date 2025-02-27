@@ -19,7 +19,7 @@ const windowWidth = Dimensions.get('window').width;
 export default function HistoryScreen({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedTab, setSelectedTab] = useState('current');
-    const itemsPerPage = 16;
+    const itemsPerPage = 24;
     const [completedChallenges, setCompletedChallenges] = useState([]);
     const [currentChallenge, setCurrentChallenge] = useState([]);
     
@@ -448,6 +448,7 @@ const styles = StyleSheet.create({
     },
     arrowLeft: {
         position: 'absolute',
+        top:'50%',
         left: 16,
     },
     arrowRight: {

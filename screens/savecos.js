@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Svg, Path, G, Text as SVGText } from 'react-native-svg';
 import {
   StyleSheet,
@@ -15,13 +15,12 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-// 移除 PieChart 导入，因为我们将使用自定义的
-// import { PieChart } from 'react-native-chart-kit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const windowWidth = Dimensions.get('window').width;
 const pieChartWidth = windowWidth * 0.85;
 
-// 将 CustomPieChart 移动到组件外部
+// CustomPieChart component remains the same
 const CustomPieChart = ({ data, salary }) => {
   const total = data.reduce((sum, item) => sum + item.population, 0);
   let currentAngle = 0;
@@ -82,6 +81,7 @@ const CustomPieChart = ({ data, salary }) => {
   );
 };
 
+// RowItem component remains the same
 const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
   const [leftBoxFocused, setLeftBoxFocused] = useState(false);
   const [rightBoxFocused, setRightBoxFocused] = useState(false);
@@ -140,7 +140,7 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
 
               // 检查是否超过 10
               if (parseInt(sanitizedNumber, 10) > 10) {
-                Alert.alert("数值不能超过 10，请重新输入！");
+                Alert.alert("數值不能超過 10，请重新输入！");
                 return;
               }
 
@@ -148,7 +148,7 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
               const newTotal = rowData.reduce((sum, row) => sum + (row.rightNumber === rightNumber ? parseInt(sanitizedNumber, 10) : parseInt(row.rightNumber, 10)), 0);
 
               if (newTotal > 10) {
-                Alert.alert("10，请重新输入！");
+                Alert.alert("所有總和不能超過 10，请重新输入！");
                 return;
               }
 
@@ -184,6 +184,40 @@ export default function Savecos({ navigation }) {
     { id: 3, leftText: '風險管理', rightNumber: '1' },
   ]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+
+  // 从 AsyncStorage 加载数据
+  useEffect(() => {
+    const loadSavedData = async () => {
+      try {
+        const savedData = await AsyncStorage.getItem('salaryData');
+        if (savedData) {
+          const data = JSON.parse(savedData);
+          setSalary(data.salary);
+          setRowData(data.allocations);
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      }
+    };
+
+    loadSavedData();
+  }, []);
+
+  // 保存数据到 AsyncStorage
+  const saveData = async () => {
+    try {
+      const data = {
+        salary,
+        allocations: rowData,
+        updatedAt: new Date().toISOString()
+      };
+      await AsyncStorage.setItem('salaryData', JSON.stringify(data));
+      Alert.alert('保存成功', '薪資配置已成功保存');
+    } catch (error) {
+      console.error('Failed to save data:', error);
+      Alert.alert('保存失敗', '請稍後再試');
+    }
+  };
 
   const addNewRow = () => {
     if (rowData.length >= 10) {
@@ -298,6 +332,10 @@ export default function Savecos({ navigation }) {
               <Icon name="delete" size={24} color="#fff" />
               <Text style={styles.addButtonText}>{isDeleteMode ? '完成' : '刪除'}</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.saveButton} onPress={saveData}>
+              <Icon name="save" size={24} color="#fff" />
+              <Text style={styles.addButtonText}>保存</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.chartSection}>
@@ -310,20 +348,30 @@ export default function Savecos({ navigation }) {
                 />
               </View>
               <View style={styles.legendContainer}>
-                {getChartData().map((data, index) => (
-                  <View key={index} style={styles.legendItem}>
-                    <View style={[styles.legendColor, { backgroundColor: data.color }]} />
-                    <Text style={styles.legendText}>{data.name}</Text>
-                    <Text style={styles.legendValue}>${data.amount}</Text>
-                  </View>
-                ))}
+                {getChartData().map((data, index) => {
+                  // 檢查數值總和是否為10
+                  const total = rowData.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
+                  const isTotalComplete = total === 10;
+                  
+                  return (
+                    <View key={index} style={styles.legendItem}>
+                      <View style={[styles.legendColor, { backgroundColor: data.color }]} />
+                      <Text style={styles.legendText}>{data.name}</Text>
+                      {/* 只有當總和為10時才顯示金額，否則顯示佔位符 */}
+                      <Text style={styles.legendValue}>
+                        {isTotalComplete ? `$${data.amount}` : "-"}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           </View>
         </ScrollView>
         {/* 查看按钮 */}
-        <TouchableOpacity style={styles.checkButton}>
-          <Text style={styles.checkButtonText}>查看目前已存金额</Text>
+        <TouchableOpacity style={styles.checkButton} onPress={() => navigation.navigate('Historycos')}>
+          <Text style={styles.checkButtonText}>查看目前已存金額
+          </Text>
         </TouchableOpacity>
 
         {/* 底部导航栏 */}
