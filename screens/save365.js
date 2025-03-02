@@ -254,16 +254,14 @@ export default function Save365({ navigation, route }) {
     return rows;
   };
 
-  // 处理导航到历史页面，并传递当前页码
   const navigateToHistory = () => {
-    // 在导航前保存当前页码
     saveCurrentPage(currentPage);
     
-    // 导航到历史页面并传递参数
     navigation.navigate('History', { 
       history,
       savedPage: currentPage,
-      returnToSave365: true  // 添加标记，表示需要返回到 Save365
+      returnToSave365: true,
+      sourceScreen: 'save365'
     });
   };
 

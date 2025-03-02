@@ -14,14 +14,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Main1Screen() {
   const navigation = useNavigation();
 
-  const handleSelectPlan = async (planType) => {
-    try {
-      await AsyncStorage.setItem('sourceScreen', planType);
-      navigation.navigate(planType);
-    } catch (error) {
-      console.error('Error saving source screen:', error);
-    }
-  };
+const handleSelectPlan = async () => {
+  try {
+    await AsyncStorage.setItem('sourceScreen', 'save52');
+    navigation.navigate('save52');
+  } catch (error) {
+    console.error('Error saving source screen:', error);
+  }
+};
   
   const handleLeftArrow = () => {
     navigation.navigate('MainScreen');

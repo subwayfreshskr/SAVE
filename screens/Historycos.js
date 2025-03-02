@@ -17,68 +17,39 @@ export default function Historycos({ route, navigation }) {
     const [savingsHistory, setSavingsHistory] = useState([]);
     const [totalSavings, setTotalSavings] = useState(0);
 
-    // 获取存储的薪资和分配数据
     useEffect(() => {
-        const loadSavingsData = async () => {
-            try {
-                // 获取历史记录
-                const savedHistory = await AsyncStorage.getItem('savingsHistory');
-                const history = savedHistory ? JSON.parse(savedHistory) : [];
-                setSavingsHistory(history);
-
-                // 计算总金额
-                const total = history.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-                setTotalSavings(total);
-            } catch (error) {
-                console.error('Failed to load savings data:', error);
+        const loadSavings = async () => {
+          try {
+            const savedSavings = await AsyncStorage.getItem('totalSavings');
+            if (savedSavings) {
+              setTotalSavings(parseFloat(savedSavings));
             }
+          } catch (error) {
+            console.error('Failed to load savings:', error);
+          }
         };
+    
+        loadSavings();
+      }, []);
 
-        loadSavingsData();
-    }, []);
-
-    // 添加当月存款记录
-    const addMonthlySavings = async () => {
-        try {
-            // 从 AsyncStorage 获取当前工资和分配数据
-            const salaryData = await AsyncStorage.getItem('salaryData');
-            if (salaryData) {
-                const data = JSON.parse(salaryData);
-                const { salary, allocations } = data;
-
-                // 查找"存錢"类别
-                const savingsCategory = allocations.find(item => item.leftText === '存錢');
-                
-                if (savingsCategory) {
-                    // 计算存款金额
-                    const total = allocations.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
-                    const savingsRatio = parseInt(savingsCategory.rightNumber, 10) / total;
-                    const savingsAmount = parseFloat(salary) * savingsRatio;
-
-                    // 创建新记录
-                    const date = new Date();
-                    const newRecord = {
-                        id: Date.now().toString(),
-                        month: `${date.getFullYear()}/${date.getMonth() + 1}`,
-                        amount: savingsAmount,
-                        date: date.toISOString()
-                    };
-
-                    // 更新历史记录并保存
-                    const updatedHistory = [...savingsHistory, newRecord];
-                    await AsyncStorage.setItem('savingsHistory', JSON.stringify(updatedHistory));
-                    
-                    // 更新状态
-                    setSavingsHistory(updatedHistory);
-                    setTotalSavings(totalSavings + savingsAmount);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to add monthly savings:', error);
+      useEffect(() => {
+        // Check if depositAmounts are passed via route
+        if (route.params?.depositAmounts) {
+          const { depositAmounts } = route.params;
+          const newSavings = depositAmounts.reduce((sum, item) => sum + item.amount, 0); // Sum the amounts
+          setTotalSavings(prevSavings => prevSavings + newSavings);
+          saveSavings(newSavings);
         }
-    };
+      }, [route.params?.depositAmounts]);
+    
+      const saveSavings = async (newSavings) => {
+        try {
+          await AsyncStorage.setItem('totalSavings', (totalSavings + newSavings).toString());
+        } catch (error) {
+          console.error('Failed to save savings:', error);
+        }
+      };
 
-    // 渲染单个历史记录项
     const renderSavingsItem = ({ item }) => (
         <View style={styles.historyItem}>
             <Text style={styles.historyMonth}>{item.month}</Text>
@@ -108,16 +79,8 @@ export default function Historycos({ route, navigation }) {
                 {/* 存款總額 */}
                 <View style={styles.totalContainer}>
                     <Text style={styles.totalLabel}>存款總額</Text>
-                    <Text style={styles.totalAmount}>${totalSavings.toLocaleString()}</Text>
+                    <Text style={styles.totalAmount}>${totalSavings.toFixed(2)}</Text>
                 </View>
-
-                {/* 添加本月存款按钮 */}
-                <TouchableOpacity 
-                    style={styles.addButton}
-                    onPress={addMonthlySavings}
-                >
-                    <Text style={styles.addButtonText}>添加本月存款</Text>
-                </TouchableOpacity>
 
                 {/* 存款歷史記錄 */}
                 <View style={styles.historyContainer}>
@@ -131,7 +94,9 @@ export default function Historycos({ route, navigation }) {
                             style={styles.historyList}
                         />
                     ) : (
-                        <Text style={styles.emptyText}>暫無存款記錄</Text>
+                         <View style={styles.emptyContainer}>
+                                            <Text style={styles.emptyText}>本月還沒有儲蓄記錄</Text>
+                                        </View>
                     )}
                 </View>
 
@@ -226,28 +191,17 @@ const styles = StyleSheet.create({
         color: '#014F86',
         fontWeight: 'bold',
     },
-    addButton: {
-        backgroundColor: '#2A6F97',
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 4,
-        marginTop: 16,
-    },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '500',
-    },
     historyContainer: {
-        width: '90%',
+        width: '85%',
         marginTop: 24,
         flex: 1,
     },
     historyTitle: {
-        fontSize: 16,
+        textAlign:'center',
+        fontSize: 20,
         color: '#2A6F97',
         fontWeight: 'bold',
-        marginBottom: 12,
+        marginBottom: 24,
     },
     historyList: {
         width: '100%',
@@ -269,10 +223,14 @@ const styles = StyleSheet.create({
         color: '#014F86',
         fontWeight: '500',
     },
+    emptyContainer: {
+        flex: 1,
+    },
     emptyText: {
-        textAlign: 'center',
-        color: '#666',
-        marginTop: 24,
+        fontSize: 16,
+        color: '#606060',
+        fontStyle: 'italic',
+        textAlign:'center',
     },
     menuContainer: {
         width: '100%',

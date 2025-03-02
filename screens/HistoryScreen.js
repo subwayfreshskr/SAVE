@@ -22,10 +22,17 @@ export default function HistoryScreen({ route, navigation }) {
     const itemsPerPage = 24;
     const [completedChallenges, setCompletedChallenges] = useState([]);
     const [currentChallenge, setCurrentChallenge] = useState([]);
+    const [sourceScreen, setSourceScreen] = useState('save365');
     
     useEffect(() => {
         loadCompletedChallenges();
-    }, []);
+        
+        // Check if we're coming from settings
+        if (route.params?.sourceScreen) {
+            // Set source screen for back navigation
+            setSourceScreen(route.params.sourceScreen);
+        }
+    }, [route.params]);
     
     // 加載已完成的挑戰記錄
     const loadCompletedChallenges = async () => {
@@ -203,9 +210,8 @@ export default function HistoryScreen({ route, navigation }) {
                     style={styles.backButton}
                     onPress={() => navigation.navigate('save365')}
                 >
-                    <Text style={styles.backText}>回上一頁</Text>
+                    <Text style={styles.backText}>返回計畫</Text>
                 </TouchableOpacity>
-
                 {/* 標籤切換 */}
                 <View style={styles.tabContainer}>
                     <TouchableOpacity 

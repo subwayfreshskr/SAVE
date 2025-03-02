@@ -16,7 +16,7 @@ export default function MainScreen() {
 
   const handleSelectPlan = async (planType) => {
     try {
-      await AsyncStorage.setItem('sourceScreen', planType);
+      await AsyncStorage.setItem('sourceScreen', 'MainScreen');
       navigation.navigate(planType);
     } catch (error) {
       console.error('Error saving source screen:', error);

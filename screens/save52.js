@@ -342,7 +342,8 @@ export default function Save52({ navigation, route }) {
       currentSalary: salary,
       allChallenges,
       savedPage: currentPage,
-      returnToSave52: true 
+      returnToSave52: true,
+      sourceScreen: 'save52'
     });
   }}
 >
@@ -381,18 +382,21 @@ export default function Save52({ navigation, route }) {
     <Text style={styles.iconText}>主頁</Text>
   </TouchableOpacity>
   <TouchableOpacity 
-    style={styles.iconWrapper} 
-    onPress={() => {
-      saveCurrentPage(currentPage);
-      navigation.navigate('Setting', { savedPage: currentPage });
-    }}
-  >
-    <Image 
-      source={require('../assets/setting.png')}
-      style={styles.menuIcon}
-    />
-    <Text style={styles.iconText}>設定</Text>
-  </TouchableOpacity>
+  style={styles.iconWrapper} 
+  onPress={() => {
+    saveCurrentPage(currentPage);
+    navigation.navigate('Setting', { 
+      sourceScreen: 'save52',
+      savedPage: currentPage 
+    });
+  }}
+>
+  <Image 
+    source={require('../assets/setting.png')}
+    style={styles.menuIcon}
+  />
+  <Text style={styles.iconText}>設定</Text>
+</TouchableOpacity>
 </View>
         </View>
 

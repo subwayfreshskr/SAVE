@@ -20,7 +20,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const windowWidth = Dimensions.get('window').width;
 const pieChartWidth = windowWidth * 0.85;
 
-// CustomPieChart component remains the same
 const CustomPieChart = ({ data, salary }) => {
   const total = data.reduce((sum, item) => sum + item.population, 0);
   let currentAngle = 0;
@@ -38,10 +37,8 @@ const CustomPieChart = ({ data, salary }) => {
           const labelX = Math.cos((labelAngle - 90) * Math.PI / 180) * labelRadius;
           const labelY = Math.sin((labelAngle - 90) * Math.PI / 180) * labelRadius;
 
-          // 计算金额
           const amount = (parseFloat(salary) || 0) * percentage;
           
-          // 创建扇形路径
           const startX = Math.cos((currentAngle - 90) * Math.PI / 180) * radius;
           const startY = Math.sin((currentAngle - 90) * Math.PI / 180) * radius;
           const endX = Math.cos((currentAngle + angle - 90) * Math.PI / 180) * radius;
@@ -80,8 +77,6 @@ const CustomPieChart = ({ data, salary }) => {
     </Svg>
   );
 };
-
-// RowItem component remains the same
 const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, setRowData, onDelete, isDeleteMode }) => {
   const [leftBoxFocused, setLeftBoxFocused] = useState(false);
   const [rightBoxFocused, setRightBoxFocused] = useState(false);
@@ -128,23 +123,19 @@ const RowItem = ({ leftText, setLeftText, rightNumber, setRightNumber, rowData, 
         )}
       </View>
 
-      {/* 右侧栏位 */}
       <View style={[styles.rightBox,rightBoxFocused && styles.focusedBox]}>
         {isEditingRight ? (
           <TextInput
             style={styles.textInput}
             value={rightNumber === "0" ? "" : rightNumber}  
             onChangeText={(num) => {
-              let sanitizedNumber = num.replace(/^0+/, ""); // 移除前导 0
+              let sanitizedNumber = num.replace(/^0+/, "");
               if (sanitizedNumber === "") sanitizedNumber = "0";
 
-              // 检查是否超过 10
               if (parseInt(sanitizedNumber, 10) > 10) {
                 Alert.alert("數值不能超過 10，请重新输入！");
                 return;
               }
-
-              // 计算新数值总和
               const newTotal = rowData.reduce((sum, row) => sum + (row.rightNumber === rightNumber ? parseInt(sanitizedNumber, 10) : parseInt(row.rightNumber, 10)), 0);
 
               if (newTotal > 10) {
@@ -185,7 +176,6 @@ export default function Savecos({ navigation }) {
   ]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
-  // 从 AsyncStorage 加载数据
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -203,7 +193,6 @@ export default function Savecos({ navigation }) {
     loadSavedData();
   }, []);
 
-  // 保存数据到 AsyncStorage
   const saveData = async () => {
     try {
       const data = {
@@ -235,14 +224,14 @@ export default function Savecos({ navigation }) {
   const calculateAmounts = () => {
     const salaryNum = parseFloat(salary) || 0;
     const total = rowData.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
-    
+
     return rowData.map((item, index) => {
       const ratio = parseInt(item.rightNumber, 10) / total;
       const amount = salaryNum * ratio;
-      
+
       return {
         name: item.leftText,
-        amount: amount.toLocaleString(),
+        amount: amount,
         population: parseInt(item.rightNumber, 10),
         color: ['#a9d6e5', '#89c2d9', '#61a5c2', '#468faf', '#2c7da0', '#2a6f97', '#014f86', '#01497c', '#013a63', '#012a4a'][index % 10],
         legendFontColor: '#101010',
@@ -349,7 +338,6 @@ export default function Savecos({ navigation }) {
               </View>
               <View style={styles.legendContainer}>
                 {getChartData().map((data, index) => {
-                  // 檢查數值總和是否為10
                   const total = rowData.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
                   const isTotalComplete = total === 10;
                   
@@ -357,7 +345,6 @@ export default function Savecos({ navigation }) {
                     <View key={index} style={styles.legendItem}>
                       <View style={[styles.legendColor, { backgroundColor: data.color }]} />
                       <Text style={styles.legendText}>{data.name}</Text>
-                      {/* 只有當總和為10時才顯示金額，否則顯示佔位符 */}
                       <Text style={styles.legendValue}>
                         {isTotalComplete ? `$${data.amount}` : "-"}
                       </Text>
@@ -369,10 +356,15 @@ export default function Savecos({ navigation }) {
           </View>
         </ScrollView>
         {/* 查看按钮 */}
-        <TouchableOpacity style={styles.checkButton} onPress={() => navigation.navigate('Historycos')}>
-          <Text style={styles.checkButtonText}>查看目前已存金額
-          </Text>
-        </TouchableOpacity>
+        <TouchableOpacity
+    style={styles.checkButton}
+    onPress={() => {
+      const depositAmounts = calculateAmounts();
+      navigation.navigate('Historycos', { depositAmounts });
+    }}
+  >
+    <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+  </TouchableOpacity>
 
         {/* 底部导航栏 */}
         <View style={styles.menuContainer}>

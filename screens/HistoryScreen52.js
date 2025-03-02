@@ -15,10 +15,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HistoryScreen52({ route, navigation }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedTab, setSelectedTab] = useState('current'); // 'current' or 'completed'
+    const [selectedTab, setSelectedTab] = useState('current');
     const itemsPerPage = 24;
     const [completedChallenges, setCompletedChallenges] = useState([]);
     const [currentChallenge, setCurrentChallenge] = useState([]);
+    const [sourceScreen, setSourceScreen] = useState('save52');
+
+    const loadCompletedChallenges = async () => {
+        try {
+            const savedAllChallenges = await AsyncStorage.getItem('save52AllChallenges');
+            if (savedAllChallenges) {
+                setCompletedChallenges(JSON.parse(savedAllChallenges));
+            }
+        } catch (error) {
+            console.error('Error loading completed challenges:', error);
+        }
+    };
+
+    useEffect(() => {
+        loadCompletedChallenges();
+        
+        if (route.params?.sourceScreen) {
+            setSourceScreen(route.params.sourceScreen);
+        }
+    }, [route.params]);
     
     useEffect(() => {
         loadChallengeData();
@@ -215,7 +235,7 @@ export default function HistoryScreen52({ route, navigation }) {
                     style={styles.backButton}
                     onPress={() => navigation.navigate('save52')}
                 >
-                    <Text style={styles.backText}>回上一頁</Text>
+                    <Text style={styles.backText}>返回計畫</Text>
                 </TouchableOpacity>
 
                 {/* 標籤切換 */}

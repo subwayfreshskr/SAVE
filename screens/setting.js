@@ -163,7 +163,35 @@ export default function setting({ navigation }) {
         <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('security')}><Text>隱私權保護政策</Text></TouchableOpacity>
 
         <Text style={styles.sectionTitle}>關於計畫</Text>
-        <TouchableOpacity style={styles.menuItem}><Text>計畫進度</Text></TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => {
+            const sourceScreen = navigation.getState().routes.find(
+              route => route.name === 'Setting'
+            )?.params?.sourceScreen;
+            
+            if (sourceScreen === 'save52') {
+              navigation.navigate('History52', { 
+                sourceScreen: sourceScreen,
+                returnToSave52: true
+              });
+
+            } else if (sourceScreen === 'savecos') {
+              navigation.navigate('Historycos', { 
+                sourceScreen: sourceScreen,
+                returnToSaveCos: true
+              });
+            } else {
+
+              navigation.navigate('History', { 
+                sourceScreen: sourceScreen || 'save365',
+                returnToSave365: true
+              });
+            }
+          }}
+        >
+          <Text>計畫進度</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={handlePlanChange}><Text>變更計畫</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('notify')}><Text>通知</Text></TouchableOpacity>
