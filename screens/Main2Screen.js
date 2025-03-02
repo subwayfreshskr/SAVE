@@ -30,8 +30,14 @@ export default function Main2Screen() {
   const handleRightArrow = () => {
     navigation.navigate('MainScreen');
   };
-  const handleConfirm = () => {
-    handleSelectPlan('savecos');
+  const handleConfirm = async () => {
+    try {
+      await AsyncStorage.setItem('sourceScreen', 'savecos');
+      navigation.navigate('savecos', { sourceScreen: 'savecos' });
+    } catch (error) {
+      console.error('Error saving source screen:', error);
+      Alert.alert('錯誤', '無法設置計畫來源');
+    }
   };
 
   const handleBack = () => {

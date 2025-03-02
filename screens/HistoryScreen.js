@@ -35,20 +35,32 @@ export default function HistoryScreen({ route, navigation }) {
     }, [route.params]);
     
     // 加載已完成的挑戰記錄
-    const loadCompletedChallenges = async () => {
-        try {
-            const savedCompletedChallenges = await AsyncStorage.getItem('completedChallenges');
-            if (savedCompletedChallenges) {
-                setCompletedChallenges(JSON.parse(savedCompletedChallenges));
-            }
-            
-            // 設置當前挑戰
-            const history = [...(route.params.history || [])];
-            setCurrentChallenge(history);
-        } catch (error) {
-            console.error('Error loading completed challenges:', error);
-        }
-    };
+    // Replace the loadCompletedChallenges function in HistoryScreen.js
+const loadCompletedChallenges = async () => {
+    try {
+      // Load completed challenges
+      const savedCompletedChallenges = await AsyncStorage.getItem('completedChallenges');
+      if (savedCompletedChallenges) {
+        setCompletedChallenges(JSON.parse(savedCompletedChallenges));
+      }
+      
+      // Always load current challenge data from AsyncStorage
+      const savedHistory = await AsyncStorage.getItem('savingHistory');
+      if (savedHistory) {
+        setCurrentChallenge(JSON.parse(savedHistory));
+      } else {
+        setCurrentChallenge([]);
+      }
+      
+      // Only use route.params.history as a fallback if necessary
+      // This part is optional and could be removed
+      if (!savedHistory && route.params?.history) {
+        setCurrentChallenge([...route.params.history]);
+      }
+    } catch (error) {
+      console.error('Error loading challenges data:', error);
+    }
+  };
 
     // 根據所選標籤獲取適當的歷史記錄
     const getActiveHistory = () => {

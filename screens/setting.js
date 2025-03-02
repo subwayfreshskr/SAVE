@@ -164,34 +164,80 @@ export default function setting({ navigation }) {
 
         <Text style={styles.sectionTitle}>關於計畫</Text>
         <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => {
-            const sourceScreen = navigation.getState().routes.find(
-              route => route.name === 'Setting'
-            )?.params?.sourceScreen;
-            
-            if (sourceScreen === 'save52') {
-              navigation.navigate('History52', { 
-                sourceScreen: sourceScreen,
-                returnToSave52: true
-              });
-
-            } else if (sourceScreen === 'savecos') {
-              navigation.navigate('Historycos', { 
-                sourceScreen: sourceScreen,
-                returnToSaveCos: true
-              });
-            } else {
-
-              navigation.navigate('History', { 
-                sourceScreen: sourceScreen || 'save365',
-                returnToSave365: true
-              });
-            }
-          }}
-        >
-          <Text>計畫進度</Text>
-        </TouchableOpacity>
+  style={styles.menuItem}
+  onPress={async () => {
+    try {
+      // Get source screen
+      const sourceScreen = navigation.getState().routes.find(
+        route => route.name === 'Setting'
+      )?.params?.sourceScreen;
+      
+      // Use AsyncStorage as fallback if params don't have sourceScreen
+      const storedSourceScreen = !sourceScreen ? 
+        await AsyncStorage.getItem('sourceScreen') : 
+        sourceScreen;
+      
+      // Load appropriate history data based on the source screen
+      let historyData = [];
+      if (storedSourceScreen === 'save52') {
+        const savedHistory = await AsyncStorage.getItem('save52History');
+        if (savedHistory) historyData = JSON.parse(savedHistory);
+        
+        navigation.navigate('History52', { 
+          sourceScreen: storedSourceScreen,
+          returnToSave52: true,
+          history: historyData
+        });
+      } 
+      else if (storedSourceScreen === 'savecos') {
+        const savedHistory = await AsyncStorage.getItem('savingHistoryCos');
+        if (savedHistory) historyData = JSON.parse(savedHistory);
+        
+        navigation.navigate('Historycos', { 
+          sourceScreen: storedSourceScreen,
+          returnToSaveCos: true,
+          history: historyData
+        });
+      } 
+      else {
+        // Default to save365
+        const savedHistory = await AsyncStorage.getItem('savingHistory');
+        if (savedHistory) historyData = JSON.parse(savedHistory);
+        
+        navigation.navigate('History', { 
+          sourceScreen: storedSourceScreen || 'save365',
+          returnToSave365: true,
+          history: historyData
+        });
+      }
+    } catch (error) {
+      console.error('Error navigating to history:', error);
+      // Fallback to original behavior if there's an error
+      const sourceScreen = navigation.getState().routes.find(
+        route => route.name === 'Setting'
+      )?.params?.sourceScreen || 'save365';
+      
+      if (sourceScreen === 'save52') {
+        navigation.navigate('History52', { 
+          sourceScreen: sourceScreen,
+          returnToSave52: true
+        });
+      } else if (sourceScreen === 'savecos') {
+        navigation.navigate('Historycos', { 
+          sourceScreen: sourceScreen,
+          returnToSaveCos: true
+        });
+      } else {
+        navigation.navigate('History', { 
+          sourceScreen: sourceScreen || 'save365',
+          returnToSave365: true
+        });
+      }
+    }
+  }}
+>
+  <Text>計畫進度</Text>
+</TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={handlePlanChange}><Text>變更計畫</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem}onPress={() => navigation.navigate('notify')}><Text>通知</Text></TouchableOpacity>

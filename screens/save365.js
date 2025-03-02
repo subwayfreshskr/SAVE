@@ -254,16 +254,16 @@ export default function Save365({ navigation, route }) {
     return rows;
   };
 
-  const navigateToHistory = () => {
-    saveCurrentPage(currentPage);
-    
-    navigation.navigate('History', { 
-      history,
-      savedPage: currentPage,
-      returnToSave365: true,
-      sourceScreen: 'save365'
-    });
-  };
+const navigateToHistory = () => {
+  saveCurrentPage(currentPage);
+  
+  navigation.navigate('History', { 
+    history,
+    savedPage: currentPage,
+    returnToSave365: true,
+    sourceScreen: 'save365'
+  });
+};
 
   return (
     <View style={styles.container}>

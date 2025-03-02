@@ -73,7 +73,7 @@ export default function Historycos({ route, navigation }) {
                     style={styles.backButton}
                     onPress={() => navigation.navigate('savecos')}
                 >
-                    <Text style={styles.backText}>回上一頁</Text>
+                    <Text style={styles.backText}>返回計畫</Text>
                 </TouchableOpacity>
 
                 {/* 存款總額 */}
@@ -121,14 +121,17 @@ export default function Historycos({ route, navigation }) {
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.iconWrapper}
-                            onPress={() => navigation.navigate('Setting')}
-                        >
+                            onPress={() => {
+                                const { sourceScreen } = route.params || {};
+                                navigation.navigate('Setting', { sourceScreen: sourceScreen || 'savecos' });
+                            }}
+                            >
                             <Image
                                 source={require('../assets/setting.png')}
                                 style={styles.menuIcon}
                             />
                             <Text style={styles.iconText}>設定</Text>
-                        </TouchableOpacity>
+                            </TouchableOpacity>
                     </View>
                 </View>
             </View>
