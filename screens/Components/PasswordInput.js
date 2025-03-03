@@ -1,13 +1,17 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const PasswordInput = ({ placeholder, value, onChangeText }) => {
+const PasswordInput = ({ 
+  placeholder, 
+  value, 
+  onChangeText 
+}) => {
+  const inputRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
-  const inputRef = useRef(null);
 
-  const handleEyePress = () => {
+  const toggleSecureEntry = () => {
     setSecureTextEntry(!secureTextEntry);
   };
 
@@ -26,9 +30,10 @@ const PasswordInput = ({ placeholder, value, onChangeText }) => {
       />
       {isFocused && (
         <TouchableOpacity
-          onPress={handleEyePress}
+          onPress={toggleSecureEntry}
           style={styles.eyeButton}
           activeOpacity={0.7}
+          hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}
         >
           <Icon
             name={secureTextEntry ? 'eye-off' : 'eye'}
@@ -65,6 +70,8 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: 8,
     marginLeft: 8,
+    zIndex: 10,
+    elevation: 10,
   },
 });
 

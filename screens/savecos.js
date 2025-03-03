@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import { Svg, Path, G, Text as SVGText } from 'react-native-svg';
 import {
   StyleSheet,
@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 const pieChartWidth = windowWidth * 0.85;
@@ -177,6 +178,43 @@ export default function Savecos({ navigation }) {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
   useEffect(() => {
+    const loadSalary = async () => {
+        try {
+            const savedSalary = await AsyncStorage.getItem('salary');
+            if (savedSalary) {
+                setSalary(savedSalary);
+            }
+        } catch (error) {
+            console.error('Failed to load salary:', error);
+        }
+    };
+
+    loadSalary();
+}, []);
+
+useFocusEffect(
+    useCallback(() => {
+        // This will run when the screen comes into focus
+        const loadSalary = async () => {
+            try {
+                const savedSalary = await AsyncStorage.getItem('salary');
+                if (savedSalary) {
+                    setSalary(savedSalary);
+                }
+            } catch (error) {
+                console.error('Failed to load salary:', error);
+            }
+        };
+
+        loadSalary();
+
+        return () => {
+            // Optional: Any cleanup code here
+        };
+    }, [])
+);
+
+  useEffect(() => {
     const loadSavedData = async () => {
       try {
         const savedData = await AsyncStorage.getItem('salaryData');
@@ -195,22 +233,21 @@ export default function Savecos({ navigation }) {
 
   const saveData = async () => {
     try {
-      const data = {
-        salary,
-        allocations: rowData,
-        updatedAt: new Date().toISOString()
-      };
-      await AsyncStorage.setItem('salaryData', JSON.stringify(data));
-      Alert.alert('保存成功', '薪資配置已成功保存');
+        const data = {
+            salary,
+            allocations: rowData,
+            updatedAt: new Date().toISOString()
+        };
+        await AsyncStorage.setItem('salaryData', JSON.stringify(data));
+        await AsyncStorage.setItem('salary', salary);
     } catch (error) {
-      console.error('Failed to save data:', error);
-      Alert.alert('保存失敗', '請稍後再試');
+        console.error('Failed to save data:', error);
     }
-  };
+};
 
   const addNewRow = () => {
     if (rowData.length >= 10) {
-      Alert.alert("最多只能有 10 个項目！");
+      Alert.alert("最多只能有 10 個項目！");
       return;
     }
     const newId = rowData.length + 1;
@@ -321,10 +358,6 @@ export default function Savecos({ navigation }) {
               <Icon name="delete" size={24} color="#fff" />
               <Text style={styles.addButtonText}>{isDeleteMode ? '完成' : '刪除'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={saveData}>
-              <Icon name="save" size={24} color="#fff" />
-              <Text style={styles.addButtonText}>保存</Text>
-            </TouchableOpacity>
           </View>
 
           <View style={styles.chartSection}>
@@ -345,9 +378,6 @@ export default function Savecos({ navigation }) {
                     <View key={index} style={styles.legendItem}>
                       <View style={[styles.legendColor, { backgroundColor: data.color }]} />
                       <Text style={styles.legendText}>{data.name}</Text>
-                      <Text style={styles.legendValue}>
-                        {isTotalComplete ? `$${data.amount}` : "-"}
-                      </Text>
                     </View>
                   );
                 })}
@@ -357,14 +387,16 @@ export default function Savecos({ navigation }) {
         </ScrollView>
         {/* 查看按钮 */}
         <TouchableOpacity
-    style={styles.checkButton}
-    onPress={() => {
-      const depositAmounts = calculateAmounts();
-      navigation.navigate('Historycos', { depositAmounts });
-    }}
-  >
-    <Text style={styles.checkButtonText}>查看目前已存金額</Text>
-  </TouchableOpacity>
+            style={styles.checkButton}
+            onPress={async () => {
+                await saveData();
+                const depositAmounts = calculateAmounts();
+                const savingsOnly = depositAmounts.filter(item => item.name === '存錢');
+                navigation.navigate('Historycos', { depositAmounts: savingsOnly });
+            }}
+        >
+            <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+        </TouchableOpacity>
 
         {/* 底部导航栏 */}
         <View style={styles.menuContainer}>
@@ -608,11 +640,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#101010',
     flex: 1,
-  },
-  legendValue: {
-    fontSize: 12,
-    color: '#101010',
-    marginLeft: 8,
   },
   menuContainer: {
     width: 402,

@@ -16,7 +16,7 @@ import PasswordInput from './Components/PasswordInput';
 import AccountInput from './Components/AccountInput';
 import PhoneInput from './Components/PhoneInput';
 
-export default function ForgetScreen({ navigation }) {
+export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [isUsernameFocused, setIsUsernameFocused] = useState(false);
     const [password, setPassword] = useState('');
@@ -93,10 +93,11 @@ export default function ForgetScreen({ navigation }) {
           />
         </View>
         <View style={styles.scrollContainer}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* 登入標題 */}
         <Text style={styles.title}>註冊</Text>
          {/* 帳號輸入框 */}
@@ -108,25 +109,23 @@ export default function ForgetScreen({ navigation }) {
           setIsFocused={setIsUsernameFocused}
           setSecureTextEntry={setUsername}
         />
-        {/* 新密碼輸入框 */}
-       <PasswordInput
+        <PasswordInput
           placeholder="密碼"
-          value={password}
-          onChangeText={setPassword}
-          isFocused={isPasswordFocused}
+          value={password}                  
+          onChangeText={setPassword}     
+          isFocused={isPasswordFocused}   
           setIsFocused={setIsPasswordFocused}
-          secureTextEntry={!passwordVisible} // 父狀態控制 secureTextEntry
-          setSecureTextEntry={() => setPasswordVisible(!passwordVisible)} // 傳遞切換邏輯
+          secureTextEntry={!passwordVisible} 
+          setSecureTextEntry={() => setPasswordVisible(!passwordVisible)}
         />
 
-          {/* 確認新密碼輸入框 */}
-          <PasswordInput
+        <PasswordInput
           placeholder="確認密碼"
-          value={confirmPassword}
+          value={confirmPassword} 
           onChangeText={setConfirmPassword}
           isFocused={isConfirmPasswordFocused}
           setIsFocused={setIsConfirmPasswordFocused}
-          secureTextEntry={!confirmPasswordVisible}
+          secureTextEntry={!confirmPasswordVisible} 
           setSecureTextEntry={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
         />
         {/* 手機驗證 */}
