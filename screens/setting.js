@@ -75,8 +75,16 @@ export default function setting({ navigation }) {
       await AsyncStorage.removeItem('save52History');
       await AsyncStorage.removeItem('save52Circles');
       await AsyncStorage.removeItem('save52Salary');
+      await AsyncStorage.removeItem('totalSavings');
+      await AsyncStorage.removeItem('completedChallenges');
+      await AsyncStorage.removeItem('save52AllChallenges');
+      await AsyncStorage.removeItem('salary');
+      await AsyncStorage.removeItem('salaryData');
+      await AsyncStorage.removeItem('savingsHistory');
+      await AsyncStorage.removeItem('totalSavings');
+      await AsyncStorage.removeItem('savingHistoryCos');
 
-     
+      
       console.log('所有記錄已成功清除');
     } catch (error) {
       console.error('清除記錄時發生錯誤:', error);

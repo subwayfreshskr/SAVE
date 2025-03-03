@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useCallback} from 'react';
 import {
     FlatList,
     StyleSheet,
@@ -13,10 +13,12 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Historycos({ route, navigation }) {
     const [savingsHistory, setSavingsHistory] = useState([]);
     const [totalSavings, setTotalSavings] = useState(0);
+    
     const clearHistory = async () => {
         try {
 
@@ -45,6 +47,27 @@ export default function Historycos({ route, navigation }) {
           console.error('Failed to clear history:', error);
         }
       };
+
+      useFocusEffect(
+        useCallback(() => {
+          const loadData = async () => {
+            try {
+              const savedHistory = await AsyncStorage.getItem('savingsHistory');
+              if (savedHistory) {
+                const historyData = JSON.parse(savedHistory);
+                setSavingsHistory(historyData);
+                
+                const calculatedTotal = historyData.reduce((sum, item) => sum + item.amount, 0);
+                setTotalSavings(calculatedTotal);
+              }
+            } catch (error) {
+              console.error('Failed to load data:', error);
+            }
+          };
+      
+          loadData();
+        }, [])
+      );
 
     useEffect(() => {
         const loadSavings = async () => {
@@ -82,38 +105,49 @@ export default function Historycos({ route, navigation }) {
       }, []);
 
       useEffect(() => {
-        if (route.params?.depositAmounts) {
-          const { depositAmounts } = route.params;
-          const newSavings = depositAmounts.reduce((sum, item) => sum + item.amount, 0); 
+        if (route.params?.currentSavingsAmount !== undefined) {
+          // 取得當前月份
+          const currentDate = new Date();
+          const month = currentDate.toLocaleString('default', { month: 'long' });
           
-          if (newSavings > 0) {
-            // Create a new history item
-            const currentDate = new Date();
-            const month = currentDate.toLocaleString('default', { month: 'long' });
+          // 檢查是否已有當月記錄
+          const existingMonthIndex = savingsHistory.findIndex(item => item.month === month);
+          let updatedHistory = [...savingsHistory];
+          
+          if (existingMonthIndex >= 0) {
+            // 更新當月記錄
+            updatedHistory[existingMonthIndex] = {
+              ...updatedHistory[existingMonthIndex],
+              amount: route.params.currentSavingsAmount
+            };
+          } else {
+            // 新增當月記錄
             const newHistoryItem = {
               id: Date.now().toString(),
               month: month,
-              amount: newSavings
+              amount: route.params.currentSavingsAmount
             };
-            
-            // Update history and save
-            const updatedHistory = [...savingsHistory, newHistoryItem];
-            setSavingsHistory(updatedHistory);
-            saveHistory(updatedHistory);
-            
-            // Recalculate total from the updated history
-            const newTotal = updatedHistory.reduce((sum, item) => sum + item.amount, 0);
-            setTotalSavings(newTotal);
+            updatedHistory = [...updatedHistory, newHistoryItem];
           }
+          
+          // 更新歷史記錄和總金額
+          setSavingsHistory(updatedHistory);
+          
+          // 計算新的總金額
+          const newTotal = updatedHistory.reduce((sum, item) => sum + item.amount, 0);
+          setTotalSavings(newTotal);
+          
+          // 保存到 AsyncStorage
+          saveHistory(updatedHistory);
         }
-      }, [route.params?.depositAmounts]);
+      }, [route.params?.currentSavingsAmount, route.params?.timestamp]);
 
       const saveHistory = async (historyData) => {
         try {
-          // Save history
+          // 保存歷史記錄
           await AsyncStorage.setItem('savingsHistory', JSON.stringify(historyData));
           
-          // Calculate and save total based on history
+          // 計算並保存總金額
           const total = historyData.reduce((sum, item) => sum + item.amount, 0);
           await AsyncStorage.setItem('totalSavings', total.toString());
         } catch (error) {

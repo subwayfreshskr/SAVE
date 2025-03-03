@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback} from 'react';
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
 import { Svg, Path, G, Text as SVGText } from 'react-native-svg';
 import {
   StyleSheet,
@@ -20,6 +22,74 @@ import { useFocusEffect } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 const pieChartWidth = windowWidth * 0.85;
+const BACKGROUND_FETCH_TASK = 'background-fetch-task';
+
+TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+  try {
+    const today = new Date();
+    if (today.getDate() === 10) {
+      // 獲取儲存的數據
+      const savedData = await AsyncStorage.getItem('salaryData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        const salary = parseFloat(data.salary) || 0;
+        const allocations = data.allocations;
+        
+        // 計算存款金額
+        const total = allocations.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
+        const savingsItem = allocations.find(item => item.leftText === '存錢');
+        
+        if (savingsItem && salary > 0) {
+          const savingsRatio = parseInt(savingsItem.rightNumber, 10) / total;
+          const savingsAmount = salary * savingsRatio;
+          
+          // 獲取中文月份
+          const month = getChineseMonth(today);
+          
+          // 保存到歷史記錄
+          const savedHistory = await AsyncStorage.getItem('savingsHistory');
+          let historyData = savedHistory ? JSON.parse(savedHistory) : [];
+          
+          // 檢查是否已有當月記錄
+          const existingMonthIndex = historyData.findIndex(item => item.month === month);
+          
+          if (existingMonthIndex >= 0) {
+            // 更新當月記錄
+            historyData[existingMonthIndex] = {
+              ...historyData[existingMonthIndex],
+              amount: savingsAmount
+            };
+          } else {
+            // 新增當月記錄
+            const newHistoryItem = {
+              id: Date.now().toString(),
+              month: month,
+              amount: savingsAmount
+            };
+            historyData = [...historyData, newHistoryItem];
+          }
+          
+          // 計算總金額
+          const totalSavings = historyData.reduce((sum, item) => sum + item.amount, 0);
+          
+          // 保存到 AsyncStorage
+          await AsyncStorage.setItem('savingsHistory', JSON.stringify(historyData));
+          await AsyncStorage.setItem('totalSavings', totalSavings.toString());
+        }
+      }
+    }
+    return BackgroundFetch.BackgroundFetchResult.NewData;
+  } catch (error) {
+    console.error('Background fetch failed:', error);
+    return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+});
+
+// 轉換月份為中文的函數
+function getChineseMonth(date) {
+  const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+  return months[date.getMonth()];
+}
 
 const CustomPieChart = ({ data, salary }) => {
   const total = data.reduce((sum, item) => sum + item.population, 0);
@@ -177,43 +247,102 @@ export default function Savecos({ navigation }) {
   ]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
+  // 修改 savecos.js 中的 saveData 函數
+  const saveData = async () => {
+    try {
+      const data = {
+        salary,
+        allocations: rowData,
+        updatedAt: new Date().toISOString()
+      };
+      await AsyncStorage.setItem('salaryData', JSON.stringify(data));
+      await AsyncStorage.setItem('salary', salary);
+      
+      // 計算存款金額
+      const salaryNum = parseFloat(salary) || 0;
+      const total = rowData.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
+      
+      // 找到"存錢"項目的金額
+      const savingsItem = rowData.find(item => item.leftText === '存錢');
+      
+      if (savingsItem) {
+        const savingsRatio = parseInt(savingsItem.rightNumber, 10) / total;
+        const savingsAmount = salaryNum * savingsRatio;
+        
+        // 保存當前存款金額到 AsyncStorage
+        const currentDate = new Date();
+        const month = currentDate.toLocaleString('default', { month: 'long' });
+        
+        // 讀取現有的存款歷史
+        const savedHistory = await AsyncStorage.getItem('savingsHistory');
+        let historyData = savedHistory ? JSON.parse(savedHistory) : [];
+        
+        // 檢查是否已有當月記錄
+        const existingMonthIndex = historyData.findIndex(item => item.month === month);
+        
+        if (existingMonthIndex >= 0) {
+          // 更新當月記錄
+          historyData[existingMonthIndex] = {
+            ...historyData[existingMonthIndex],
+            amount: savingsAmount
+          };
+        } else {
+          // 新增當月記錄
+          const newHistoryItem = {
+            id: Date.now().toString(),
+            month: month,
+            amount: savingsAmount
+          };
+          historyData = [...historyData, newHistoryItem];
+        }
+        
+        // 計算總金額
+        const totalSavings = historyData.reduce((sum, item) => sum + item.amount, 0);
+        
+        // 保存到 AsyncStorage
+        await AsyncStorage.setItem('savingsHistory', JSON.stringify(historyData));
+        await AsyncStorage.setItem('totalSavings', totalSavings.toString());
+      }
+    } catch (error) {
+      console.error('Failed to save data:', error);
+    }
+  };
+
+  // 當 rowData 或 salary 變化時自動保存
+  useEffect(() => {
+    if (salary !== '') {
+      saveData();
+    }
+  }, [salary, rowData]);
+
+  // 當頁面失去焦點時保存數據
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (salary !== '') {
+          saveData();
+        }
+      };
+    }, [salary, rowData, saveData])
+  );
+
+  // 加載薪水
   useEffect(() => {
     const loadSalary = async () => {
-        try {
-            const savedSalary = await AsyncStorage.getItem('salary');
-            if (savedSalary) {
-                setSalary(savedSalary);
-            }
-        } catch (error) {
-            console.error('Failed to load salary:', error);
+      try {
+        const savedSalary = await AsyncStorage.getItem('salary');
+        if (savedSalary) {
+          setSalary(savedSalary);
         }
+      } catch (error) {
+        console.error('Failed to load salary:', error);
+      }
     };
 
     loadSalary();
-}, []);
+  }, []);
 
-useFocusEffect(
-    useCallback(() => {
-        // This will run when the screen comes into focus
-        const loadSalary = async () => {
-            try {
-                const savedSalary = await AsyncStorage.getItem('salary');
-                if (savedSalary) {
-                    setSalary(savedSalary);
-                }
-            } catch (error) {
-                console.error('Failed to load salary:', error);
-            }
-        };
-
-        loadSalary();
-
-        return () => {
-            // Optional: Any cleanup code here
-        };
-    }, [])
-);
-
+  // 加載保存的數據
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -230,20 +359,6 @@ useFocusEffect(
 
     loadSavedData();
   }, []);
-
-  const saveData = async () => {
-    try {
-        const data = {
-            salary,
-            allocations: rowData,
-            updatedAt: new Date().toISOString()
-        };
-        await AsyncStorage.setItem('salaryData', JSON.stringify(data));
-        await AsyncStorage.setItem('salary', salary);
-    } catch (error) {
-        console.error('Failed to save data:', error);
-    }
-};
 
   const addNewRow = () => {
     if (rowData.length >= 10) {
@@ -313,6 +428,7 @@ useFocusEffect(
           placeholderTextColor="#ccc"
           keyboardType="numeric"
           value={salary}
+          onEndEditing={saveData}
           onChangeText={(text) => {
             const numericValue = text.replace(/[^0-9]/g, '');
             setSalary(numericValue);
@@ -387,16 +503,25 @@ useFocusEffect(
         </ScrollView>
         {/* 查看按钮 */}
         <TouchableOpacity
-            style={styles.checkButton}
-            onPress={async () => {
-                await saveData();
-                const depositAmounts = calculateAmounts();
-                const savingsOnly = depositAmounts.filter(item => item.name === '存錢');
-                navigation.navigate('Historycos', { depositAmounts: savingsOnly });
-            }}
-        >
-            <Text style={styles.checkButtonText}>查看目前已存金額</Text>
-        </TouchableOpacity>
+    style={styles.checkButton}
+    onPress={async () => {
+        await saveData();
+        const depositAmounts = calculateAmounts();
+        const savingsOnly = depositAmounts.filter(item => item.name === '存錢');
+        
+        // 計算本次應該更新的存款金額
+        const currentSavingsAmount = savingsOnly.length > 0 ? savingsOnly[0].amount : 0;
+        
+        // 明確傳遞當前存款金額和時間戳以確保更新
+        navigation.navigate('Historycos', { 
+            depositAmounts: savingsOnly,
+            currentSavingsAmount: currentSavingsAmount,
+            timestamp: Date.now() 
+        });
+    }}
+>
+    <Text style={styles.checkButtonText}>查看目前已存金額</Text>
+</TouchableOpacity>
 
         {/* 底部导航栏 */}
         <View style={styles.menuContainer}>
