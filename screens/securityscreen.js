@@ -15,7 +15,6 @@ export default function Security({ navigation }) {
 
   const handleScroll = (event) => {
     const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-    // 判斷是否滑到底部（允許微小誤差 20）
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
       setIsEndReached(true);
     } else {
@@ -49,8 +48,8 @@ export default function Security({ navigation }) {
         <ScrollView 
           style={styles.scrollView} 
           contentContainerStyle={styles.scrollContent}
-          onScroll={handleScroll} // 監聽滾動事件
-          scrollEventThrottle={16} // 增加滾動偵測的靈敏度
+          onScroll={handleScroll} 
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           scrollEnabled={true}

@@ -22,17 +22,14 @@ export default function setting({ navigation }) {
         route => route.name === 'Setting'
       )?.params;
   
-      // 保存來源頁面信息
       if (params?.sourceScreen) {
         setSourceScreen(params.sourceScreen);
-        // 可選：保存到 AsyncStorage
         try {
           await AsyncStorage.setItem('sourceScreen', params.sourceScreen);
         } catch (error) {
           console.error('Error saving source screen:', error);
         }
       } else {
-        // 如果params中沒有，嘗試從AsyncStorage讀取
         try {
           const savedSourceScreen = await AsyncStorage.getItem('sourceScreen');
           if (savedSourceScreen) {
@@ -44,10 +41,8 @@ export default function setting({ navigation }) {
       }
     };
   
-    // 初始載入
     loadInitialData();
   
-    // 監聽頁面聚焦事件
     unsubscribeFocus = navigation.addListener('focus', () => {
       loadInitialData();
     });
@@ -68,7 +63,6 @@ export default function setting({ navigation }) {
   };
   const resetAllRecords = async () => {
     try {
-      // 清除特定的記帳記錄
       await AsyncStorage.removeItem('accountingRecords');
       await AsyncStorage.removeItem('savingHistory');
       await AsyncStorage.removeItem('selectedCircles');
@@ -106,7 +100,7 @@ export default function setting({ navigation }) {
           onPress: async () => {
             try {
               await resetAllRecords();
-              await AsyncStorage.removeItem('sourceScreen'); // 清除 sourceScreen
+              await AsyncStorage.removeItem('sourceScreen');
               navigation.reset({
                 index: 0,
                 routes: [{ name: 'MainScreen' }],
@@ -136,7 +130,7 @@ export default function setting({ navigation }) {
         onPress: async () => {
           try {
             await resetAllRecords();
-            await AsyncStorage.removeItem('sourceScreen'); // 清除 sourceScreen
+            await AsyncStorage.removeItem('sourceScreen');
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
@@ -175,17 +169,12 @@ export default function setting({ navigation }) {
   style={styles.menuItem}
   onPress={async () => {
     try {
-      // Get source screen
       const sourceScreen = navigation.getState().routes.find(
         route => route.name === 'Setting'
       )?.params?.sourceScreen;
-      
-      // Use AsyncStorage as fallback if params don't have sourceScreen
       const storedSourceScreen = !sourceScreen ? 
         await AsyncStorage.getItem('sourceScreen') : 
         sourceScreen;
-      
-      // Load appropriate history data based on the source screen
       let historyData = [];
       if (storedSourceScreen === 'save52') {
         const savedHistory = await AsyncStorage.getItem('save52History');
@@ -208,7 +197,6 @@ export default function setting({ navigation }) {
         });
       } 
       else {
-        // Default to save365
         const savedHistory = await AsyncStorage.getItem('savingHistory');
         if (savedHistory) historyData = JSON.parse(savedHistory);
         
@@ -220,7 +208,6 @@ export default function setting({ navigation }) {
       }
     } catch (error) {
       console.error('Error navigating to history:', error);
-      // Fallback to original behavior if there's an error
       const sourceScreen = navigation.getState().routes.find(
         route => route.name === 'Setting'
       )?.params?.sourceScreen || 'save365';

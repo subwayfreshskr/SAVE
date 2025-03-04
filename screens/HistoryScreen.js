@@ -27,24 +27,18 @@ export default function HistoryScreen({ route, navigation }) {
     useEffect(() => {
         loadCompletedChallenges();
         
-        // Check if we're coming from settings
         if (route.params?.sourceScreen) {
-            // Set source screen for back navigation
             setSourceScreen(route.params.sourceScreen);
         }
     }, [route.params]);
     
-    // 加載已完成的挑戰記錄
-    // Replace the loadCompletedChallenges function in HistoryScreen.js
 const loadCompletedChallenges = async () => {
     try {
-      // Load completed challenges
       const savedCompletedChallenges = await AsyncStorage.getItem('completedChallenges');
       if (savedCompletedChallenges) {
         setCompletedChallenges(JSON.parse(savedCompletedChallenges));
       }
       
-      // Always load current challenge data from AsyncStorage
       const savedHistory = await AsyncStorage.getItem('savingHistory');
       if (savedHistory) {
         setCurrentChallenge(JSON.parse(savedHistory));
@@ -52,8 +46,6 @@ const loadCompletedChallenges = async () => {
         setCurrentChallenge([]);
       }
       
-      // Only use route.params.history as a fallback if necessary
-      // This part is optional and could be removed
       if (!savedHistory && route.params?.history) {
         setCurrentChallenge([...route.params.history]);
       }
@@ -62,12 +54,10 @@ const loadCompletedChallenges = async () => {
     }
   };
 
-    // 根據所選標籤獲取適當的歷史記錄
     const getActiveHistory = () => {
         if (selectedTab === 'current') {
             return [...currentChallenge].reverse();
         } else {
-            // 展示所有已完成的挑戰
             return completedChallenges.flatMap(challenge => 
                 challenge.history.map(item => ({
                     ...item,
@@ -79,27 +69,21 @@ const loadCompletedChallenges = async () => {
 
     const activeHistory = getActiveHistory();
     const totalPages = Math.ceil(activeHistory.length / itemsPerPage);
-
-    // 計算總金額 (根據選中的標籤)
     const calculateTotalAmount = () => {
         if (selectedTab === 'current') {
             return currentChallenge.reduce((sum, item) => sum + Number(item.number), 0);
         } else {
-            // 如果有完成的挑戰，返回 66795 (365挑戰的總金額)
-            // 或者，如果有多個已完成的挑戰，可以計算它們的總和
-            return completedChallenges.length * 66795; // 完成一個 365 天挑戰的總金額
+
+            return completedChallenges.length * 66795;
         }
     };
     
     const formattedTotalAmount = calculateTotalAmount().toLocaleString();
 
-    // 獲取當前頁的記錄
     const getCurrentPageData = () => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return activeHistory.slice(startIndex, startIndex + itemsPerPage);
     };
-
-    // 處理翻頁
     const handlePrevPage = () => {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
@@ -120,13 +104,11 @@ const loadCompletedChallenges = async () => {
         }
     };
 
-    // 切換標籤時重置頁碼
     const handleTabChange = (tab) => {
         setSelectedTab(tab);
         setCurrentPage(1);
     };
 
-    // 渲染已完成挑戰項目
     const renderCompletedChallenges = () => {
         if (completedChallenges.length === 0) {
             return (
@@ -148,7 +130,6 @@ const loadCompletedChallenges = async () => {
         );
     };
 
-    // 渲染當前挑戰項目
     const renderCurrentChallenge = () => {
         if (activeHistory.length === 0) {
             return (

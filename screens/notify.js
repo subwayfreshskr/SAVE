@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     },
     menu: {
         width: '100%',
-        flex: 1, // 添加 flex: 1 讓它可以撐開整個空間
+        flex: 1,
         marginBottom: 24,
     },
     menuItem: {

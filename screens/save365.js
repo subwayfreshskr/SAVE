@@ -16,24 +16,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const windowWidth = Dimensions.get('window').width;
 
 export default function Save365({ navigation, route }) {
-  // 原有的 state
   const [selectedCircles, setSelectedCircles] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
   const [slideAnim] = useState(new Animated.Value(0));
   const [history, setHistory] = useState([]); 
   const [fadeAnim] = useState(new Animated.Value(1));
-  
-  // 新增完成時的彈窗 state
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(0.5));
   
   const calculateTotalAmount = () => {
-    return 66795; // (1 + 365) * 365 / 2
+    return 66795;
   };
 
-  // 首次加载时设置初始页码
   useEffect(() => {
-    // 初次加载时尝试获取保存的页码
     const initPage = async () => {
       try {
         const savedPage = await AsyncStorage.getItem('currentPage');
@@ -49,21 +44,17 @@ export default function Save365({ navigation, route }) {
     loadSavedData();
   }, []);
 
-  // 监听路由参数变化
   useEffect(() => {
     if (route.params?.savedPage !== undefined) {
       setCurrentPage(route.params.savedPage);
     }
   }, [route.params]);
 
-  // 添加焦点监听器
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
-      // 当页面获得焦点时，检查route.params
       if (route.params?.savedPage !== undefined) {
         console.log('Restoring page from params:', route.params.savedPage);
         setCurrentPage(route.params.savedPage);
-        // 清除参数，防止多次设置
         navigation.setParams({ savedPage: undefined });
       }
       
@@ -76,7 +67,6 @@ export default function Save365({ navigation, route }) {
   useEffect(() => {
     if (history.length === 365) {
       setShowCompletionModal(true);
-      // 执行放大动画
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 8,
@@ -86,7 +76,6 @@ export default function Save365({ navigation, route }) {
     }
   }, [history]);
 
-  // 保存当前页码到 AsyncStorage
   const saveCurrentPage = async (page) => {
     try {
       await AsyncStorage.setItem('currentPage', page.toString());
@@ -96,7 +85,6 @@ export default function Save365({ navigation, route }) {
     }
   };
 
-  // 从 AsyncStorage 加载数据
   const loadSavedData = async () => {
     try {
       const savedHistory = await AsyncStorage.getItem('savingHistory');
@@ -105,8 +93,6 @@ export default function Save365({ navigation, route }) {
       if (savedHistory) {
         const parsedHistory = JSON.parse(savedHistory);
         setHistory(parsedHistory);
-        
-        // 检查是否已完成所有 365 个圆圈
         if (parsedHistory.length === 365) {
           setShowCompletionModal(true);
         }
@@ -119,7 +105,6 @@ export default function Save365({ navigation, route }) {
     }
   };
   
-  // 保存数据到 AsyncStorage
   const saveData = async (newHistory, newSelectedCircles) => {
     try {
       await AsyncStorage.setItem('savingHistory', JSON.stringify(newHistory));
@@ -129,18 +114,15 @@ export default function Save365({ navigation, route }) {
     }
   };
   
-  // 处理圆圈选择
   const handleCirclePress = (number) => {
     const currentDate = new Date().toLocaleDateString();
 
-    // 更新选中状态
     const newSelectedCircles = {
       ...selectedCircles,
       [number]: selectedCircles[number] ? null : require('../assets/check.png')
     };
     setSelectedCircles(newSelectedCircles);
 
-    // 更新历史记录
     let newHistory;
     if (selectedCircles[number]) {
       newHistory = history.filter(item => item.number !== number);
@@ -150,14 +132,11 @@ export default function Save365({ navigation, route }) {
     
     setHistory(newHistory);
 
-    // 保存到 AsyncStorage
     saveData(newHistory, newSelectedCircles);
   };
   
-  // 保存已完成的挑战到 AsyncStorage
   const saveCompletedChallenge = async () => {
     try {
-      // 获取已完成的挑战
       const savedCompletedChallenges = await AsyncStorage.getItem('completedChallenges');
       let completedChallenges = [];
       
@@ -165,7 +144,6 @@ export default function Save365({ navigation, route }) {
         completedChallenges = JSON.parse(savedCompletedChallenges);
       }
       
-      // 添加当前完成的挑战
       const newCompletedChallenge = {
         completionDate: new Date().toLocaleDateString(),
         history: [...history],
@@ -174,7 +152,6 @@ export default function Save365({ navigation, route }) {
       
       completedChallenges.push(newCompletedChallenge);
       
-      // 保存到 AsyncStorage
       await AsyncStorage.setItem('completedChallenges', JSON.stringify(completedChallenges));
     } catch (error) {
       console.error('Error saving completed challenge:', error);
@@ -182,28 +159,21 @@ export default function Save365({ navigation, route }) {
   };
   
   const resetAllCircles = async () => {
-    // 在重置前保存当前完成的挑战
     if (history.length === 365) {
       await saveCompletedChallenge();
     }
     
-    // 重置所有选中的圆圈
     setSelectedCircles({});
-    // 清空历史记录
     setHistory([]);
-    // 回到第一页
     setCurrentPage(0);
     saveCurrentPage(0);
     
-    // 保存清空的数据到 AsyncStorage
     await saveData([], {});
     
-    // 关闭弹窗
     closeModal();
   };
 
   const closeModal = () => {
-    // 关闭弹窗时执行缩小动画
     Animated.timing(scaleAnim, {
       toValue: 0,
       duration: 300,
@@ -225,7 +195,6 @@ export default function Save365({ navigation, route }) {
       const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
       setCurrentPage(newPage);
       
-      // 保存最新的页码
       saveCurrentPage(newPage);
   
       Animated.timing(fadeAnim, {
@@ -236,7 +205,6 @@ export default function Save365({ navigation, route }) {
     });
   };
 
-  // 生成所有页面的数字
   const pages = [];
   const totalNumbers = 365;
   const numbersPerPage = 32;

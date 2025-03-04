@@ -15,7 +15,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
-// 添加一個轉換月份為中文的函數
 function getChineseMonth(monthName) {
   const monthMap = {
     'January': '一月',
@@ -126,22 +125,19 @@ export default function Historycos({ route, navigation }) {
 
       useEffect(() => {
         if (route.params?.currentSavingsAmount !== undefined) {
-          // 取得當前月份，直接使用中文月份
           const currentDate = new Date();
           const month = getChineseMonth(currentDate.toLocaleString('default', { month: 'long' }));
           
-          // 檢查是否已有當月記錄
           const existingMonthIndex = savingsHistory.findIndex(item => item.month === month);
           let updatedHistory = [...savingsHistory];
           
           if (existingMonthIndex >= 0) {
-            // 更新當月記錄
             updatedHistory[existingMonthIndex] = {
               ...updatedHistory[existingMonthIndex],
               amount: route.params.currentSavingsAmount
             };
           } else {
-            // 新增當月記錄
+
             const newHistoryItem = {
               id: Date.now().toString(),
               month: month,
@@ -150,24 +146,18 @@ export default function Historycos({ route, navigation }) {
             updatedHistory = [...updatedHistory, newHistoryItem];
           }
           
-          // 更新歷史記錄和總金額
           setSavingsHistory(updatedHistory);
           
-          // 計算新的總金額
           const newTotal = updatedHistory.reduce((sum, item) => sum + item.amount, 0);
           setTotalSavings(newTotal);
           
-          // 保存到 AsyncStorage
           saveHistory(updatedHistory);
         }
       }, [route.params?.currentSavingsAmount, route.params?.timestamp]);
 
       const saveHistory = async (historyData) => {
         try {
-          // 保存歷史記錄
           await AsyncStorage.setItem('savingsHistory', JSON.stringify(historyData));
-          
-          // 計算並保存總金額
           const total = historyData.reduce((sum, item) => sum + item.amount, 0);
           await AsyncStorage.setItem('totalSavings', total.toString());
         } catch (error) {
@@ -177,11 +167,8 @@ export default function Historycos({ route, navigation }) {
     
       const saveSavings = async (newSavings) => {
     try {
-        // Save total savings
         await AsyncStorage.setItem('totalSavings', (totalSavings + newSavings).toString());
-        
-        // If there's a new savings amount, add to history
-        if (newSavings > 0) {
+                if (newSavings > 0) {
             const currentDate = new Date();
             const month = getChineseMonth(currentDate.toLocaleString('default', { month: 'long' }));
             const newHistoryItem = {

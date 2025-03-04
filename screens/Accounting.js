@@ -43,8 +43,6 @@ export default function Accounting({ navigation, route }) {
         if (!isNaN(newDate.getTime())) {
           setCurrentDate(newDate);
           
-          // Clear the parameter after a short delay to prevent loops
-          // but keep forceUpdate if present
           setTimeout(() => {
             const params = {...route.params};
             delete params.selectedDate;
@@ -57,7 +55,6 @@ export default function Accounting({ navigation, route }) {
     }
   }, [route.params?.selectedDate, route.params?.forceUpdate]);
 
-  // Enhanced to process route.params.selectedDate on each render
   useEffect(() => {
     const processParams = async () => {
       if (route.params?.selectedDate) {
@@ -66,7 +63,6 @@ export default function Accounting({ navigation, route }) {
           if (!isNaN(newDate.getTime())) {
             setCurrentDate(newDate);
             
-            // 确保状态更新完成后再清除参数
             setTimeout(() => {
               navigation.setParams({ ...route.params, selectedDate: undefined });
             }, 100); 
@@ -86,7 +82,6 @@ export default function Accounting({ navigation, route }) {
     const loadInitialData = async () => {
       let initialDate = new Date();
   
-      // Check current route params for selectedDate
       if (route.params?.selectedDate) {
         try {
           const newDate = new Date(route.params.selectedDate);
@@ -94,7 +89,6 @@ export default function Accounting({ navigation, route }) {
             initialDate = newDate;
             setCurrentDate(initialDate);
             
-            // Clear the parameter after processing to prevent loops
             setTimeout(() => {
               const params = {...route.params};
               delete params.selectedDate;
@@ -106,12 +100,10 @@ export default function Accounting({ navigation, route }) {
         }
       }
       
-      // Save source screen if provided
       if (route.params?.sourceScreen) {
         setSourceScreen(route.params.sourceScreen);
       }
   
-      // Load records
       try {
         const savedRecords = await AsyncStorage.getItem('accountingRecords');
         if (savedRecords !== null) {
@@ -123,13 +115,11 @@ export default function Accounting({ navigation, route }) {
       }
     };  
   
-    // Initial load
     loadInitialData();
   
     unsubscribeFocus = navigation.addListener('focus', () => {
       loadRecords();
       
-      // Check for selectedDate param on focus
       if (route.params?.selectedDate) {
         try {
           const newDate = new Date(route.params.selectedDate);
@@ -163,7 +153,6 @@ export default function Accounting({ navigation, route }) {
     setDisplayRecords(filteredRecords);
   }, [currentDate, records]);
   
-  // Update the updateDisplayRecords function to be simpler
   const updateDisplayRecords = (date, recordsData) => {
     if (!date) return;
     
@@ -196,7 +185,6 @@ export default function Accounting({ navigation, route }) {
       if (savedRecords !== null) {
         const parsedRecords = JSON.parse(savedRecords);
         setRecords(parsedRecords);
-        // Also update display records when loading
         updateDisplayRecords(currentDate, parsedRecords);
       }
     } catch (error) {
@@ -266,7 +254,6 @@ export default function Accounting({ navigation, route }) {
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
     
-    // Update current date to the new record's date
     setCurrentDate(new Date(newRecord.date));
   };
 
@@ -282,7 +269,6 @@ export default function Accounting({ navigation, route }) {
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
     
-    // Set current date to the edited record's date
     if (editedRecord.date) {
       setCurrentDate(new Date(editedRecord.date));
     }
@@ -322,9 +308,9 @@ export default function Accounting({ navigation, route }) {
   };
 
   const handleNextDate = () => {
-    // Check if current date is today
+
     if (isToday(currentDate)) {
-      return; // If today, return without doing anything
+      return;
     }
     
     setCurrentDate((prevDate) => {
@@ -438,7 +424,6 @@ export default function Accounting({ navigation, route }) {
           onConfirm={handleConfirm}
           onCancel={hideDatePicker}
           maximumDate={new Date()}
-          // 添加以下樣式配置
           themeVariant="light"
           accentColor="#40916C"
           textColor="#000000"

@@ -28,7 +28,6 @@ export default function LoginScreen({ navigation }) {
       return;
     }
   
-    // 假設驗證成功後跳轉到主畫面
     if (username === 'test' && password === '123456') {
       Alert.alert('登入成功', `歡迎, ${username}!`);
       navigation.navigate('MainScreen'); 

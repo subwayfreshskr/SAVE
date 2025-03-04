@@ -44,16 +44,13 @@ export default function HistoryScreen52({ route, navigation }) {
         loadChallengeData();
     }, []);
     
-    // 加載挑戰記錄
     const loadChallengeData = async () => {
         try {
-            // 獲取已完成的挑戰
             const savedAllChallenges = await AsyncStorage.getItem('save52AllChallenges');
             if (savedAllChallenges) {
                 setCompletedChallenges(JSON.parse(savedAllChallenges));
             }
             
-            // 設置當前挑戰
             const history = [...(route.params.history || [])];
             const currentChallengeId = await AsyncStorage.getItem('save52CurrentChallengeId');
             
@@ -68,12 +65,10 @@ export default function HistoryScreen52({ route, navigation }) {
         }
     };
 
-    // 根據所選標籤獲取適當的歷史記錄
     const getActiveHistory = () => {
         if (selectedTab === 'current') {
             return [...currentChallenge].reverse();
         } else {
-            // 展示所有已完成的挑戰
             return completedChallenges.flatMap(challenge => 
                 challenge.history.map(item => ({
                     ...item,
@@ -85,15 +80,12 @@ export default function HistoryScreen52({ route, navigation }) {
 
     const activeHistory = getActiveHistory();
     const totalPages = Math.ceil(activeHistory.length / itemsPerPage);
-
-    // 計算總金額
     const calculateTotalAmount = () => {
         if (selectedTab === 'current') {
             return currentChallenge.reduce((sum, record) => {
                 return sum + Number(record.amount);
             }, 0);
         } else {
-            // 計算所有已完成挑戰的總和
             return completedChallenges.reduce((sum, challenge) => {
                 return sum + calculateChallengeTotal(challenge.history);
             }, 0);
@@ -108,13 +100,11 @@ export default function HistoryScreen52({ route, navigation }) {
     
     const formattedTotalAmount = calculateTotalAmount().toLocaleString();
 
-    // 獲取當前頁的記錄
     const getCurrentPageData = () => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return activeHistory.slice(startIndex, startIndex + itemsPerPage);
     };
 
-    // 處理翻頁
     const handlePrevPage = () => {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
@@ -135,13 +125,11 @@ export default function HistoryScreen52({ route, navigation }) {
         }
     };
 
-    // 切換標籤時重置頁碼
     const handleTabChange = (tab) => {
         setSelectedTab(tab);
         setCurrentPage(1);
     };
 
-    // 渲染已完成挑戰項目
     const renderCompletedChallenges = () => {
         if (completedChallenges.length === 0) {
             return (
@@ -164,7 +152,6 @@ export default function HistoryScreen52({ route, navigation }) {
         );
     };
 
-    // 渲染當前挑戰項目
     const renderCurrentChallenge = () => {
         if (activeHistory.length === 0) {
             return (

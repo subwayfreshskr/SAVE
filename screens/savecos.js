@@ -28,39 +28,30 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
     const today = new Date();
     if (today.getDate() === 10) {
-      // 獲取儲存的數據
       const savedData = await AsyncStorage.getItem('salaryData');
       if (savedData) {
         const data = JSON.parse(savedData);
         const salary = parseFloat(data.salary) || 0;
         const allocations = data.allocations;
         
-        // 計算存款金額
         const total = allocations.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
         const savingsItem = allocations.find(item => item.leftText === '存錢');
         
         if (savingsItem && salary > 0) {
           const savingsRatio = parseInt(savingsItem.rightNumber, 10) / total;
           const savingsAmount = salary * savingsRatio;
-          
-          // 獲取中文月份
           const month = getChineseMonth(today);
-          
-          // 保存到歷史記錄
           const savedHistory = await AsyncStorage.getItem('savingsHistory');
           let historyData = savedHistory ? JSON.parse(savedHistory) : [];
           
-          // 檢查是否已有當月記錄
           const existingMonthIndex = historyData.findIndex(item => item.month === month);
           
           if (existingMonthIndex >= 0) {
-            // 更新當月記錄
             historyData[existingMonthIndex] = {
               ...historyData[existingMonthIndex],
               amount: savingsAmount
             };
           } else {
-            // 新增當月記錄
             const newHistoryItem = {
               id: Date.now().toString(),
               month: month,
@@ -68,11 +59,8 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
             };
             historyData = [...historyData, newHistoryItem];
           }
-          
-          // 計算總金額
           const totalSavings = historyData.reduce((sum, item) => sum + item.amount, 0);
           
-          // 保存到 AsyncStorage
           await AsyncStorage.setItem('savingsHistory', JSON.stringify(historyData));
           await AsyncStorage.setItem('totalSavings', totalSavings.toString());
         }
@@ -85,13 +73,11 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   }
 });
 
-// 轉換月份為中文的函數
 function getChineseMonth(date) {
   const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
   return months[date.getMonth()];
 }
 
-// 增加一個函數用於轉換英文月份名稱為中文
 function englishToChineseMonth(monthName) {
   const monthMap = {
     'January': '一月',
@@ -266,8 +252,6 @@ export default function Savecos({ navigation }) {
     { id: 3, leftText: '風險管理', rightNumber: '1' },
   ]);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
-
-  // 修改 savecos.js 中的 saveData 函數
   const saveData = async () => {
     try {
       const data = {
@@ -278,37 +262,26 @@ export default function Savecos({ navigation }) {
       await AsyncStorage.setItem('salaryData', JSON.stringify(data));
       await AsyncStorage.setItem('salary', salary);
       
-      // 計算存款金額
       const salaryNum = parseFloat(salary) || 0;
       const total = rowData.reduce((sum, item) => sum + parseInt(item.rightNumber, 10), 0);
-      
-      // 找到"存錢"項目的金額
       const savingsItem = rowData.find(item => item.leftText === '存錢');
       
       if (savingsItem) {
         const savingsRatio = parseInt(savingsItem.rightNumber, 10) / total;
         const savingsAmount = salaryNum * savingsRatio;
-        
-        // 保存當前存款金額到 AsyncStorage
         const currentDate = new Date();
-        // 使用中文月份
         const month = getChineseMonth(currentDate);
-        
-        // 讀取現有的存款歷史
         const savedHistory = await AsyncStorage.getItem('savingsHistory');
         let historyData = savedHistory ? JSON.parse(savedHistory) : [];
         
-        // 檢查是否已有當月記錄
         const existingMonthIndex = historyData.findIndex(item => item.month === month);
         
         if (existingMonthIndex >= 0) {
-          // 更新當月記錄
           historyData[existingMonthIndex] = {
             ...historyData[existingMonthIndex],
             amount: savingsAmount
           };
         } else {
-          // 新增當月記錄
           const newHistoryItem = {
             id: Date.now().toString(),
             month: month,
@@ -317,10 +290,7 @@ export default function Savecos({ navigation }) {
           historyData = [...historyData, newHistoryItem];
         }
         
-        // 計算總金額
         const totalSavings = historyData.reduce((sum, item) => sum + item.amount, 0);
-        
-        // 保存到 AsyncStorage
         await AsyncStorage.setItem('savingsHistory', JSON.stringify(historyData));
         await AsyncStorage.setItem('totalSavings', totalSavings.toString());
       }
@@ -332,11 +302,10 @@ export default function Savecos({ navigation }) {
   useEffect(() => {
     const registerBackgroundTask = async () => {
       try {
-        // 註冊背景任務
         await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-          minimumInterval: 60 * 60, // 每小時檢查一次
-          stopOnTerminate: false,    // 應用關閉時繼續運行
-          startOnBoot: true,         // 裝置重啟時自動啟動
+          minimumInterval: 60 * 60, 
+          stopOnTerminate: false,  
+          startOnBoot: true,     
         });
         console.log('Background task registered successfully');
       } catch (error) {
@@ -347,21 +316,18 @@ export default function Savecos({ navigation }) {
     registerBackgroundTask();
     
     return () => {
-      // 清理函數 (可選)
       BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK).catch(err => 
         console.error('Failed to unregister task:', err)
       );
     };
   }, []);
-  
-  // 當 rowData 或 salary 變化時自動保存
+
   useEffect(() => {
     if (salary !== '') {
       saveData();
     }
   }, [salary, rowData]);
 
-  // 當頁面失去焦點時保存數據
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -372,7 +338,6 @@ export default function Savecos({ navigation }) {
     }, [salary, rowData, saveData])
   );
 
-  // 加載薪水
   useEffect(() => {
     const loadSalary = async () => {
       try {
@@ -388,7 +353,6 @@ export default function Savecos({ navigation }) {
     loadSalary();
   }, []);
 
-  // 加載保存的數據
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -554,11 +518,7 @@ export default function Savecos({ navigation }) {
         await saveData();
         const depositAmounts = calculateAmounts();
         const savingsOnly = depositAmounts.filter(item => item.name === '存錢');
-        
-        // 計算本次應該更新的存款金額
         const currentSavingsAmount = savingsOnly.length > 0 ? savingsOnly[0].amount : 0;
-        
-        // 明確傳遞當前存款金額和時間戳以確保更新
         navigation.navigate('Historycos', { 
             depositAmounts: savingsOnly,
             currentSavingsAmount: currentSavingsAmount,

@@ -235,15 +235,12 @@ export default function NewRecord({ navigation, route }) {
   };
 
   useEffect(() => {
-    // 如果是編輯模式，使用記錄的日期
     if (editMode && recordData) {
       setInitialDate(recordData.date);
     } 
-    // 否則使用路由參數的日期
     else if (route.params?.selectedDate) {
       setInitialDate(route.params.selectedDate);
     }
-    // 如果都沒有，使用今天的日期
     else {
       setInitialDate(formatDate(new Date()));
     }
@@ -293,11 +290,9 @@ export default function NewRecord({ navigation, route }) {
       alert('請選擇類別！');
       return;
     }
-  
-    // Add a safety check for category lookup
+
     const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory) || {};
     
-    // Use the currentDate that the user selected
     const selectedDate = formatDate(currentDate);
     
     const record = {
@@ -325,11 +320,10 @@ export default function NewRecord({ navigation, route }) {
       setDescription('');
       setSelectedCategory('food');
   
-      // Make sure to include the selectedDate parameter when navigating back
       navigation.navigate('Accounting', {
         refresh: true,
         selectedDate: selectedDate,
-        forceUpdate: Date.now() // Add a timestamp to force update
+        forceUpdate: Date.now() 
       });
     } catch (error) {
       console.error('Error saving record:', error);
@@ -424,7 +418,7 @@ const isToday = (date) => {
             date={currentDate}
             onConfirm={handleConfirm}
             onCancel={hideDatePicker}
-            maximumDate={new Date()} // 限制最大日期為今天
+            maximumDate={new Date()}
         />
 
         {/* 返回按鈕 */}

@@ -180,7 +180,6 @@ export default function Analysis() {
         decimalPlaces: 2,
     };
 
-    // Analysis.js 中添加：
     const handleAddRecord = async (newRecord) => {
         try {
             const savedRecords = await AsyncStorage.getItem('accountingRecords');

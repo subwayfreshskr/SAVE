@@ -18,7 +18,7 @@ const PhoneInput = ({
   isVerificationCodeFocused,
   setIsVerificationCodeFocused,
   onSendCode,
-  onValidationChange, // 新增 prop 用於通知父組件驗證狀態
+  onValidationChange,
 }) => {
   const [countdown, setCountdown] = useState(0);
   const [isCodeSent, setIsCodeSent] = useState(false);
@@ -33,7 +33,6 @@ const PhoneInput = ({
     return () => clearInterval(timer);
   }, [countdown]);
 
-  // 驗證手機號碼格式
   const validatePhone = (phone) => {
     if (!phone) {
       return '請輸入手機號碼';
@@ -44,7 +43,6 @@ const PhoneInput = ({
     return null;
   };
 
-  // 驗證驗證碼
   const validateVerificationCode = (code) => {
     if (!isCodeSent) {
       return '請先獲取驗證碼';
@@ -55,11 +53,10 @@ const PhoneInput = ({
     if (code.length !== 6) {
       return '請輸入6位數驗證碼';
     }
-    // 這裡可以添加更多驗證邏輯
+
     return null;
   };
 
-  // 處理發送驗證碼
   const handleSendVerificationCode = () => {
     const phoneError = validatePhone(phoneValue);
     if (phoneError) {
@@ -68,20 +65,18 @@ const PhoneInput = ({
     }
 
     if (countdown === 0) {
-      setCountdown(60); // 設定倒數計時60秒
+      setCountdown(60);
       setIsCodeSent(true);
       Alert.alert('成功', '驗證碼已發送至您的手機');
       onSendCode && onSendCode();
     }
   };
 
-  // 當手機號碼或驗證碼改變時進行驗證
   useEffect(() => {
     const phoneError = validatePhone(phoneValue);
     const codeError = validateVerificationCode(verificationCode);
     const isValid = !phoneError && !codeError;
     
-    // 通知父組件驗證狀態
     onValidationChange && onValidationChange({
       isValid,
       phoneError,
@@ -105,7 +100,7 @@ const PhoneInput = ({
   value={phoneValue}
   onChangeText={(text) => {
     onPhoneChange(text);
-    // 只在輸入達到10位數時驗證
+
     if (text.length === 10) {
       const error = validatePhone(text);
       if (error) {
@@ -116,7 +111,7 @@ const PhoneInput = ({
   onFocus={() => setIsPhoneFocused(true)}
   onBlur={() => {
     setIsPhoneFocused(false);
-    // 移除這裡的驗證
+
   }}
   keyboardType="phone-pad"
   maxLength={10}
@@ -137,7 +132,7 @@ const PhoneInput = ({
   value={verificationCode}
   onChangeText={(text) => {
     onVerificationCodeChange(text);
-    // 只在輸入達到6位數時驗證
+
     if (text.length === 6) {
       const error = validateVerificationCode(text);
       if (error) {

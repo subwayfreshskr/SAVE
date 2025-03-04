@@ -30,7 +30,6 @@ export default function Save52({ navigation, route }) {
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
 
   useEffect(() => {
-    // 初次加载时尝试获取保存的页码
     const initPage = async () => {
       try {
         const savedPage = await AsyncStorage.getItem('currentPage');
@@ -54,11 +53,9 @@ export default function Save52({ navigation, route }) {
   
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
-      // 当页面获得焦点时，检查route.params
       if (route.params?.savedPage !== undefined) {
         console.log('Restoring page from params:', route.params.savedPage);
         setCurrentPage(route.params.savedPage);
-        // 清除参数，防止多次设置
         navigation.setParams({ savedPage: undefined });
       }
       
@@ -220,7 +217,6 @@ export default function Save52({ navigation, route }) {
       const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
       setCurrentPage(newPage);
       
-      // 保存最新的页码
       saveCurrentPage(newPage);
   
       Animated.timing(fadeAnim, {

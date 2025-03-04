@@ -34,7 +34,6 @@ export default function changepassword({ navigation }) {
       });
       
       const handleConfirm= () => {
-        // 先檢查手機和驗證碼的驗證狀態
         if (!phoneValidation.isValid) {
           if (phoneValidation.phoneError) {
             Alert.alert('錯誤', phoneValidation.phoneError);
@@ -50,19 +49,16 @@ export default function changepassword({ navigation }) {
           }
         }
       
-        // 檢查密碼是否為空
         if (!password.trim()) {
           Alert.alert('錯誤', '請輸入新密碼');
           return;
         }
       
-        // 檢查確認密碼是否為空
         if (!confirmPassword.trim()) {
           Alert.alert('錯誤', '請輸入確認密碼');
           return;
         }
       
-        // 檢查兩次密碼是否相同
         if (password !== confirmPassword) {
           Alert.alert('錯誤', '兩次輸入的密碼不相同');
           return;
@@ -118,11 +114,10 @@ export default function changepassword({ navigation }) {
           onChangeText={setPassword}
           isFocused={isPasswordFocused}
           setIsFocused={setIsPasswordFocused}
-          secureTextEntry={!passwordVisible} // 父狀態控制 secureTextEntry
-          setSecureTextEntry={() => setPasswordVisible(!passwordVisible)} // 傳遞切換邏輯
+          secureTextEntry={!passwordVisible}
+          setSecureTextEntry={() => setPasswordVisible(!passwordVisible)}
         />
 
-          {/* 確認新密碼輸入框 */}
           <PasswordInput
           placeholder="確認新密碼"
           value={confirmPassword}
