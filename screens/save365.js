@@ -362,14 +362,14 @@ const navigateToHistory = () => {
               source={require('../assets/account.png')}
               style={styles.menuIcon}
             />
-            <Text style={styles.iconText}>记帐</Text>
+            <Text style={styles.iconText}>記帳</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper}>
             <Image 
               source={require('../assets/home.png')}
               style={styles.menuIcon}
             />
-            <Text style={styles.iconText}>主页</Text>
+            <Text style={styles.iconText}>主頁</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.iconWrapper} 
@@ -382,7 +382,7 @@ const navigateToHistory = () => {
               source={require('../assets/setting.png')}
               style={styles.menuIcon}
             />
-            <Text style={styles.iconText}>设定</Text>
+            <Text style={styles.iconText}>設定</Text>
           </TouchableOpacity>
         </View>
       </View>

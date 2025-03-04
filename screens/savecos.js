@@ -91,6 +91,26 @@ function getChineseMonth(date) {
   return months[date.getMonth()];
 }
 
+// 增加一個函數用於轉換英文月份名稱為中文
+function englishToChineseMonth(monthName) {
+  const monthMap = {
+    'January': '一月',
+    'February': '二月',
+    'March': '三月',
+    'April': '四月',
+    'May': '五月',
+    'June': '六月',
+    'July': '七月',
+    'August': '八月',
+    'September': '九月',
+    'October': '十月',
+    'November': '十一月',
+    'December': '十二月'
+  };
+  
+  return monthMap[monthName] || monthName;
+}
+
 const CustomPieChart = ({ data, salary }) => {
   const total = data.reduce((sum, item) => sum + item.population, 0);
   let currentAngle = 0;
@@ -271,7 +291,8 @@ export default function Savecos({ navigation }) {
         
         // 保存當前存款金額到 AsyncStorage
         const currentDate = new Date();
-        const month = currentDate.toLocaleString('default', { month: 'long' });
+        // 使用中文月份
+        const month = getChineseMonth(currentDate);
         
         // 讀取現有的存款歷史
         const savedHistory = await AsyncStorage.getItem('savingsHistory');
@@ -308,6 +329,31 @@ export default function Savecos({ navigation }) {
     }
   };
 
+  useEffect(() => {
+    const registerBackgroundTask = async () => {
+      try {
+        // 註冊背景任務
+        await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+          minimumInterval: 60 * 60, // 每小時檢查一次
+          stopOnTerminate: false,    // 應用關閉時繼續運行
+          startOnBoot: true,         // 裝置重啟時自動啟動
+        });
+        console.log('Background task registered successfully');
+      } catch (error) {
+        console.error('Failed to register background task:', error);
+      }
+    };
+  
+    registerBackgroundTask();
+    
+    return () => {
+      // 清理函數 (可選)
+      BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK).catch(err => 
+        console.error('Failed to unregister task:', err)
+      );
+    };
+  }, []);
+  
   // 當 rowData 或 salary 變化時自動保存
   useEffect(() => {
     if (salary !== '') {

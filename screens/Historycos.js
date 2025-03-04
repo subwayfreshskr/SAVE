@@ -15,6 +15,26 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
+// 添加一個轉換月份為中文的函數
+function getChineseMonth(monthName) {
+  const monthMap = {
+    'January': '一月',
+    'February': '二月',
+    'March': '三月',
+    'April': '四月',
+    'May': '五月',
+    'June': '六月',
+    'July': '七月',
+    'August': '八月',
+    'September': '九月',
+    'October': '十月',
+    'November': '十一月',
+    'December': '十二月'
+  };
+  
+  return monthMap[monthName] || monthName;
+}
+
 export default function Historycos({ route, navigation }) {
     const [savingsHistory, setSavingsHistory] = useState([]);
     const [totalSavings, setTotalSavings] = useState(0);
@@ -106,9 +126,9 @@ export default function Historycos({ route, navigation }) {
 
       useEffect(() => {
         if (route.params?.currentSavingsAmount !== undefined) {
-          // 取得當前月份
+          // 取得當前月份，直接使用中文月份
           const currentDate = new Date();
-          const month = currentDate.toLocaleString('default', { month: 'long' });
+          const month = getChineseMonth(currentDate.toLocaleString('default', { month: 'long' }));
           
           // 檢查是否已有當月記錄
           const existingMonthIndex = savingsHistory.findIndex(item => item.month === month);
@@ -163,7 +183,7 @@ export default function Historycos({ route, navigation }) {
         // If there's a new savings amount, add to history
         if (newSavings > 0) {
             const currentDate = new Date();
-            const month = currentDate.toLocaleString('default', { month: 'long' });
+            const month = getChineseMonth(currentDate.toLocaleString('default', { month: 'long' }));
             const newHistoryItem = {
                 id: Date.now().toString(),
                 month: month,

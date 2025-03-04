@@ -31,10 +31,6 @@ const handleSelectPlan = async () => {
     navigation.navigate('Main2Screen');
   };
 
-  const handleConfirm = () => {
-    handleSelectPlan('save52');
-  };
-
   const handleBack = () => {
     Alert.alert(
       '登出確認',

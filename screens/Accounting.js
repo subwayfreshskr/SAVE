@@ -17,7 +17,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const windowWidth = Dimensions.get('window').width;
 
-export default function Accounting({ navigation }) {
+export default function Accounting({ navigation, route }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [records, setRecords] = useState([{ items: [] }]);
   const [displayRecords, setDisplayRecords] = useState([]);
@@ -28,10 +28,57 @@ export default function Accounting({ navigation }) {
     if (sourceScreen) {
       navigation.navigate(sourceScreen);
     } else {
-      // 如果沒有 sourceScreen，可能顯示錯誤訊息或導航到預設頁面
       Alert.alert('錯誤', '無法找到主頁面');
     }
   };
+
+  useEffect(() => {
+    updateDisplayRecords(currentDate, records);
+  }, [currentDate, records]);
+
+  useEffect(() => {
+    if (route.params?.selectedDate) {
+      try {
+        const newDate = new Date(route.params.selectedDate);
+        if (!isNaN(newDate.getTime())) {
+          setCurrentDate(newDate);
+          
+          // Clear the parameter after a short delay to prevent loops
+          // but keep forceUpdate if present
+          setTimeout(() => {
+            const params = {...route.params};
+            delete params.selectedDate;
+            navigation.setParams(params);
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Error parsing date from params:', error);
+      }
+    }
+  }, [route.params?.selectedDate, route.params?.forceUpdate]);
+
+  // Enhanced to process route.params.selectedDate on each render
+  useEffect(() => {
+    const processParams = async () => {
+      if (route.params?.selectedDate) {
+        try {
+          const newDate = new Date(route.params.selectedDate);
+          if (!isNaN(newDate.getTime())) {
+            setCurrentDate(newDate);
+            
+            // 确保状态更新完成后再清除参数
+            setTimeout(() => {
+              navigation.setParams({ ...route.params, selectedDate: undefined });
+            }, 100); 
+          }
+        } catch (error) {
+          console.error('Error parsing date from params:', error);
+        }
+      }
+    };
+
+    processParams();
+  }, [route.params]);
 
   useEffect(() => {
     let unsubscribeFocus = null;
@@ -39,52 +86,60 @@ export default function Accounting({ navigation }) {
     const loadInitialData = async () => {
       let initialDate = new Date();
   
-      const params = navigation.getState().routes.find(
-        route => route.name === 'Accounting'
-      )?.params;
-  
-      // 保存來源頁面信息
-      if (params?.sourceScreen) {
-        setSourceScreen(params.sourceScreen);
-      }
-  
-      // 處理日期參數
-      if (params?.selectedDate) {
+      // Check current route params for selectedDate
+      if (route.params?.selectedDate) {
         try {
-          // 確保日期格式正確解析
-          const newDate = new Date(params.selectedDate);
+          const newDate = new Date(route.params.selectedDate);
           if (!isNaN(newDate.getTime())) {
             initialDate = newDate;
+            setCurrentDate(initialDate);
+            
+            // Clear the parameter after processing to prevent loops
+            setTimeout(() => {
+              const params = {...route.params};
+              delete params.selectedDate;
+              navigation.setParams(params);
+            }, 100);
           }
         } catch (error) {
-          console.error('Error parsing date:', error);
+          console.error('Error parsing date from params:', error);
         }
       }
+      
+      // Save source screen if provided
+      if (route.params?.sourceScreen) {
+        setSourceScreen(route.params.sourceScreen);
+      }
   
-      // 設置當前日期
-      setCurrentDate(initialDate);
-  
-      // 載入記錄
+      // Load records
       try {
         const savedRecords = await AsyncStorage.getItem('accountingRecords');
         if (savedRecords !== null) {
           const parsedRecords = JSON.parse(savedRecords);
           setRecords(parsedRecords);
-          // 設置後立即更新顯示記錄
-          updateDisplayRecords(initialDate, parsedRecords);
         }
       } catch (error) {
         console.error('Error loading records:', error);
       }
-    };
+    };  
   
-    // 初始載入
+    // Initial load
     loadInitialData();
   
-    // 監聽頁面聚焦事件
     unsubscribeFocus = navigation.addListener('focus', () => {
-      // 重新載入數據，確保日期同步
-      loadInitialData();
+      loadRecords();
+      
+      // Check for selectedDate param on focus
+      if (route.params?.selectedDate) {
+        try {
+          const newDate = new Date(route.params.selectedDate);
+          if (!isNaN(newDate.getTime())) {
+            setCurrentDate(newDate);
+          }
+        } catch (error) {
+          console.error('Error parsing date on focus:', error);
+        }
+      }
     });
   
     return () => {
@@ -92,10 +147,26 @@ export default function Accounting({ navigation }) {
         unsubscribeFocus();
       }
     };
-  }, [navigation]);
+  }, [navigation, route.params]);
   
-  // 新增一個更新顯示記錄的函數，接受日期和記錄作為參數
+  useEffect(() => {
+    if (!currentDate) return;
+    
+    const formattedDate = formatDate(currentDate);
+    const allRecords = records[0]?.items || [];
+    
+    const filteredRecords = allRecords.filter(record => {
+      if (!record || !record.date) return false;
+      return record.date === formattedDate;
+    });
+    
+    setDisplayRecords(filteredRecords);
+  }, [currentDate, records]);
+  
+  // Update the updateDisplayRecords function to be simpler
   const updateDisplayRecords = (date, recordsData) => {
+    if (!date) return;
+    
     const formattedDate = formatDate(date);
     const allRecords = recordsData?.[0]?.items || [];
     
@@ -107,7 +178,6 @@ export default function Accounting({ navigation }) {
     setDisplayRecords(filteredRecords);
   };
   
-  // 修改現有的updateDisplayRecords函數
   useEffect(() => {
     const formattedCurrentDate = formatDate(currentDate);
     const allRecords = records[0]?.items || [];
@@ -126,6 +196,8 @@ export default function Accounting({ navigation }) {
       if (savedRecords !== null) {
         const parsedRecords = JSON.parse(savedRecords);
         setRecords(parsedRecords);
+        // Also update display records when loading
+        updateDisplayRecords(currentDate, parsedRecords);
       }
     } catch (error) {
       console.error('Error loading records:', error);
@@ -194,6 +266,7 @@ export default function Accounting({ navigation }) {
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
     
+    // Update current date to the new record's date
     setCurrentDate(new Date(newRecord.date));
   };
 
@@ -209,10 +282,10 @@ export default function Accounting({ navigation }) {
     setRecords(updatedRecords);
     await saveRecords(updatedRecords);
     
-    navigation.setParams({
-      refresh: true,
-      selectedDate: formatDate(currentDate)
-    });
+    // Set current date to the edited record's date
+    if (editedRecord.date) {
+      setCurrentDate(new Date(editedRecord.date));
+    }
   };
 
   const handleDeleteRecord = async (recordId) => {
@@ -249,30 +322,30 @@ export default function Accounting({ navigation }) {
   };
 
   const handleNextDate = () => {
-  // 檢查當前選擇的日期是否為今天
-  if (isToday(currentDate)) {
-    return; // 如果是今天，直接返回不執行任何操作
-  }
-  
-  setCurrentDate((prevDate) => {
-    let newDate = new Date(prevDate);
-    newDate.setDate(newDate.getDate() + 1);
-    
-    const today = new Date();
-    if (newDate > today) {
-      return today;
+    // Check if current date is today
+    if (isToday(currentDate)) {
+      return; // If today, return without doing anything
     }
-    return newDate;
-  });
-};
+    
+    setCurrentDate((prevDate) => {
+      let newDate = new Date(prevDate);
+      newDate.setDate(newDate.getDate() + 1);
+      
+      const today = new Date();
+      if (newDate > today) {
+        return today;
+      }
+      return newDate;
+    });
+  };
 
-const handleNewRecord = () => {
-  const formattedDate = formatDate(currentDate);
-  navigation.navigate('NewRecord', {
-    onAddRecord: handleAddRecord,
-    selectedDate: formattedDate
-  });
-};
+  const handleNewRecord = () => {
+    const formattedDate = formatDate(currentDate);
+    navigation.navigate('NewRecord', {
+      onAddRecord: handleAddRecord,
+      selectedDate: formattedDate
+    });
+  };
 
   const handleAnalysis = () => {
     navigation.navigate('Analysis');
@@ -292,7 +365,6 @@ const handleNewRecord = () => {
       });
     };
     
-
     return (
       <View style={styles.recordItem}>
         <View style={styles.recordLeft}>

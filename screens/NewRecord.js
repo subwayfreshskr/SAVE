@@ -275,6 +275,7 @@ export default function NewRecord({ navigation, route }) {
   };
 
   const handleSave = async () => {
+  
     const cleanAmount = amount.replace('$', '').trim();
     
     const parsedAmount = parseFloat(cleanAmount);
@@ -293,7 +294,10 @@ export default function NewRecord({ navigation, route }) {
       return;
     }
   
-    const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory);
+    // Add a safety check for category lookup
+    const categoryInfo = CATEGORIES.find(cat => cat.id === selectedCategory) || {};
+    
+    // Use the currentDate that the user selected
     const selectedDate = formatDate(currentDate);
     
     const record = {
@@ -321,9 +325,11 @@ export default function NewRecord({ navigation, route }) {
       setDescription('');
       setSelectedCategory('food');
   
+      // Make sure to include the selectedDate parameter when navigating back
       navigation.navigate('Accounting', {
         refresh: true,
-        selectedDate: selectedDate
+        selectedDate: selectedDate,
+        forceUpdate: Date.now() // Add a timestamp to force update
       });
     } catch (error) {
       console.error('Error saving record:', error);
